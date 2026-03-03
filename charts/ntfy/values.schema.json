@@ -85,6 +85,125 @@
         }
       }
     },
+    "probes": {
+      "type": "object",
+      "description": "Container health probe settings.",
+      "additionalProperties": false,
+      "properties": {
+        "readiness": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable readinessProbe using ntfy health endpoint."
+            },
+            "path": {
+              "type": "string",
+              "default": "/v1/health",
+              "description": "HTTP path used by the readiness probe."
+            },
+            "port": {
+              "description": "Probe port name or number.",
+              "default": "http",
+              "oneOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                }
+              ]
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 5
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3
+            },
+            "successThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3
+            }
+          }
+        },
+        "liveness": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable livenessProbe using ntfy health endpoint."
+            },
+            "path": {
+              "type": "string",
+              "default": "/v1/health",
+              "description": "HTTP path used by the liveness probe."
+            },
+            "port": {
+              "description": "Probe port name or number.",
+              "default": "http",
+              "oneOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                }
+              ]
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 15
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 20
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3
+            },
+            "successThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3
+            }
+          }
+        }
+      }
+    },
     "persistence": {
       "type": "object",
       "description": "Persistent volume settings for ntfy cache storage.",

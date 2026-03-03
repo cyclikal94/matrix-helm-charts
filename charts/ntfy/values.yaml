@@ -25,6 +25,26 @@ replicas: 1
 service:
   port: 80
 
+probes:
+  readiness:
+    enabled: true
+    path: /v1/health
+    port: http
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
+  liveness:
+    enabled: true
+    path: /v1/health
+    port: http
+    initialDelaySeconds: 15
+    periodSeconds: 20
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
+
 podSecurityContext:
   enabled: true
   seccompProfile:

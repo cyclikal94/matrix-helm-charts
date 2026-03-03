@@ -76,6 +76,15 @@ host: ntfy.example.com
 helm show values ./charts/ntfy
 ```
 
+## Health Probes
+
+The chart enables HTTP readiness and liveness probes by default using ntfy's health endpoint:
+
+- Path: `/v1/health`
+- Expected response: HTTP 200 with `{"healthy":true}`
+
+Probe settings are configurable under `probes.readiness` and `probes.liveness`.
+
 ## TLS Options
 
 ### cert-manager (default)
