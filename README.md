@@ -2,8 +2,6 @@
 
 ## Overview
 
-**Note:** I am actively testing each helm chart and plan to make `1.0.0` releases only after each have been tested / considered ready. For now, `ntfy`, `matrix-appservice-irc` and the two Python-based Mautrix bridges `mautrix-telegram` / `mautrix-googlechat` have been confirmed tested and working, hence `0.9.X` versions, but are due a `1.0.0` after further testing of different configurations / deployments.
-
 A collection of helm charts to deploy services alongside Matrix, with example `values.yaml` files, initially focused on [ESS Community](https://github.com/element-hq/ess-helm) but should work with any Matrix deployment.
 
 ## Usage
@@ -33,6 +31,10 @@ helm upgrade --install <release-name> matrix-helm-charts/<chart-name> --namespac
 ```
 
 ## Components
+
+Please note that I am actively testing each helm chart and plan to make `1.0.0` releases only after each have been tested / considered ready. For now, `ntfy`, `matrix-appservice-irc` and the two Python-based Mautrix bridges `mautrix-telegram` / `mautrix-googlechat` have been confirmed tested and working, hence `0.9.X` versions, but are due a `1.0.0` after further testing of different configurations / deployments.
+
+The `mautrix-go-base` components are in-progress, though `mautrix-whatsapp` and `mautrix-linkedin` have been deployed and appear to be working (including Double Puppetting) but YMMV so for now they are `1.0.X` until I can fully test.
 
 | Link | Component | Helm Chart Version | App Version | Repository | Description |
 | --- | --- | --- | --- | --- | --- |
@@ -66,3 +68,11 @@ Double puppetting is enabled by default, and as such, any charts sharing the sam
 | [📎](charts/mautrix-gvoice/README.md) | `mautrix-gvoice` | `0.1.1` | `v0.2511.0` | [mautrix/gvoice](https://github.com/mautrix/gvoice) | A Matrix-Google Voice puppeting bridge. |
 | [📎](charts/mautrix-linkedin/README.md) | `mautrix-linkedin` | `0.1.1` | `v0.2602.0` | [mautrix/linkedin](https://github.com/mautrix/linkedin) | A Matrix-LinkedIn puppeting bridge. |
 | [📎](charts/mautrix-zulip/README.md) | `mautrix-zulip` | `0.1.1` | `v0.2511.0` | [mautrix/zulip](https://github.com/mautrix/zulip) | A Matrix-Zulip puppeting bridge. |
+
+## Credits
+
+This project has been a bunch of work, but it is nothing without the underlying projects these charts deploy. These charts could not exist without the people who built and maintain those cool things, so credit and thanks goes to them.
+
+- [@binwiederhier](https://github.com/binwiederhier) / [ntfy](https://github.com/binwiederhier/ntfy) contributors, this was the original chart / plan for this project, created to be able to deploy `ntfy` alongside `ess-helm` easily.
+- [@matrix.org](https://github.com/matrix-org) / [matrix-org/matrix-appservice-irc](https://github.com/matrix-org/matrix-appservice-irc) contributors, this was the first helm chart I setup that meant I had to figure out App Service Registration via the charts. Hopefully the way it works makes sense!
+- [@tulir](https://github.com/tulir) / [mautrix](https://github.com/mautrix) contributors, it's kinda crazy how many bridges there are and that they all nicely work the same. It meant after creating the `mautrix-go-base` chart and getting `mautrix-whatsapp` working, it was just copy/paste for the rest! As this point, they are the bulk of these charts so... you should seriously check out the repos links above!
