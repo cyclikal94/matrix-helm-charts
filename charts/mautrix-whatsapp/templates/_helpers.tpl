@@ -30,7 +30,7 @@ appservice-registration-doublepuppet.yaml
 
 {{- define "mautrix-whatsapp.doublePuppetUserRegex" -}}
 {{- $domain := include "mautrix-go-base.homeserverDomain" . -}}
-{{- printf "@.*:%s" (replace "." "\\\\." $domain) -}}
+{{- printf "@.*:%s" (replace "." "\\." $domain) -}}
 {{- end -}}
 
 {{- define "mautrix-whatsapp.reservedBasePaths" -}}
