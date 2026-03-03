@@ -1,0 +1,32 @@
+#      .
+#     / V\
+#   / `  /
+#  <<   |    Matrix example with recommended config for mautrix-zulip.
+#  /    |    Ensure `domain` is your MXID `server-name` i.e. `matrix.org`.
+#
+
+homeserver:
+  address: http://ess-synapse.ess.svc.cluster.local:8008
+  domain: matrix.example.com
+
+registration:
+  # Set if Synapse runs in a different namespace than this release.
+  synapseNamespace: ess
+
+logging: info
+
+doublePuppet:
+  enabled: true
+  # Optional overrides for shared registration behavior:
+  # registration:
+  #   id: doublepuppet-<mautrix-go-base-version>
+  #   asToken: ""
+
+config:
+  baseExtra: |
+    bridge:
+      permissions:
+        "*": relay
+        "@admin:example.com": admin
+  networkExtra: |
+    # os_name: connector-specific bridge
