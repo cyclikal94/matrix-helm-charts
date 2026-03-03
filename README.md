@@ -17,5 +17,7 @@ A collection of helm charts to deploy services alongside Matrix, with example `v
 
 #### Python Bridges
 
+| Component | Helm Chart Version | App Version | Repository | Description |
+| --- | --- | --- | --- | --- |
 | `mautrix-telegram` | `0.9.1` | `v0.15.3` | [mautrix/telegram](https://github.com/mautrix/telegram) | A Matrix-Telegram hybrid puppeting/relaybot bridge. |
 | `mautrix-googlechat` | `0.9.0` | `v0.5.2` | [mautrix/googlechat](https://github.com/mautrix/googlechat) | A Matrix-Google Chat puppeting bridge. |
