@@ -1,0 +1,620 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "mautrix-signal chart values",
+  "description": "Configuration values for deploying mautrix-signal with this Helm chart.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "homeserver"
+  ],
+  "properties": {
+    "mautrix-go-base": {
+      "type": "object",
+      "default": {}
+    },
+    "nameOverride": {
+      "type": "string",
+      "default": "",
+      "description": "Optional short name override used for labels and naming when fullnameOverride is empty."
+    },
+    "fullnameOverride": {
+      "type": "string",
+      "default": "",
+      "description": "Optional full resource name override. When set, this takes precedence over nameOverride."
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository": {
+          "type": "string",
+          "default": "dock.mau.dev/mautrix/signal"
+        },
+        "tag": {
+          "type": "string",
+          "default": "v0.2602.2"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ],
+          "default": "IfNotPresent"
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 29328
+        },
+        "publishNotReadyAddresses": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "seccompProfile": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "RuntimeDefault",
+                "Unconfined",
+                "Localhost"
+              ],
+              "default": "RuntimeDefault"
+            },
+            "localhostProfile": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      }
+    },
+    "securityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "allowPrivilegeEscalation": {
+          "type": "boolean",
+          "default": false
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean",
+          "default": false
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "drop": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "ALL"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "logging": {
+      "type": "string",
+      "default": "info",
+      "description": "Bridge log level for chart-managed stdout logging config.",
+      "enum": [
+        "panic",
+        "fatal",
+        "error",
+        "warn",
+        "info",
+        "debug",
+        "trace"
+      ]
+    },
+    "homeserver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain"
+      ],
+      "properties": {
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "default": "http://ess-synapse.ess.svc.cluster.local:8008"
+        },
+        "domain": {
+          "type": "string",
+          "minLength": 1,
+          "default": "",
+          "description": "Matrix homeserver domain (for example matrix.example.com)."
+        }
+      }
+    },
+    "appservice": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "default": "signal"
+        },
+        "address": {
+          "type": "string",
+          "default": ""
+        },
+        "hostname": {
+          "type": "string",
+          "default": "0.0.0.0"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 29328
+        },
+        "bot": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "username": {
+              "type": "string",
+              "default": "signalbot"
+            }
+          }
+        }
+      }
+    },
+    "registration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "asToken": {
+          "type": "string",
+          "default": "",
+          "description": "Appservice as_token. If empty, sourced from registration.existingSecret when set; otherwise auto-generated when registration.autoGenerate=true and registration.managedSecret.enabled=true."
+        },
+        "hsToken": {
+          "type": "string",
+          "default": "",
+          "description": "Appservice hs_token. If empty, sourced from registration.existingSecret when set; otherwise auto-generated when registration.autoGenerate=true and registration.managedSecret.enabled=true."
+        },
+        "existingSecret": {
+          "type": "string",
+          "default": "",
+          "description": "Existing Secret name with keys asToken/hsToken. When set, chart-managed runtime Secret is not created."
+        },
+        "managedSecret": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Controls creation and naming of chart-managed runtime Secret.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "name": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        },
+        "autoGenerate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-generate missing runtime secrets only when using chart-managed Secret mode."
+        },
+        "serviceUrl": {
+          "type": "string",
+          "default": ""
+        },
+        "userRegex": {
+          "type": "string",
+          "default": ""
+        },
+        "senderLocalpart": {
+          "type": "string",
+          "default": ""
+        },
+        "rateLimited": {
+          "type": "boolean",
+          "default": false
+        },
+        "synapseNamespace": {
+          "type": "string",
+          "default": "",
+          "description": "Optional namespace for an additional registration ConfigMap copy. A cross-namespace copy is created only when set and different from the release namespace."
+        },
+        "synapseConfigMapName": {
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
+    "doublePuppet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "registration": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "default": ""
+            },
+            "asToken": {
+              "type": "string",
+              "default": "",
+              "description": "Double puppet appservice as_token. If empty, sourced from registration.existingSecret, reuseExisting ConfigMap, managed Secret, or auto-generated."
+            },
+            "hsToken": {
+              "type": "string",
+              "default": "",
+              "description": "Double puppet appservice hs_token. If empty, sourced from registration.existingSecret, reuseExisting ConfigMap, managed Secret, or auto-generated."
+            },
+            "senderLocalpart": {
+              "type": "string",
+              "default": "",
+              "description": "Double puppet appservice sender_localpart. If empty, sourced from registration.existingSecret, reuseExisting ConfigMap, managed Secret, or auto-generated."
+            },
+            "existingSecret": {
+              "type": "string",
+              "default": "",
+              "description": "Existing Secret name with keys asToken/hsToken/senderLocalpart for double puppeting."
+            },
+            "managedSecret": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "name": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            },
+            "autoGenerate": {
+              "type": "boolean",
+              "default": true
+            },
+            "rateLimited": {
+              "type": "boolean",
+              "default": false
+            },
+            "configMapName": {
+              "type": "string",
+              "default": ""
+            },
+            "fileKey": {
+              "type": "string",
+              "default": "appservice-registration-doublepuppet.yaml"
+            }
+          }
+        },
+        "reuseExisting": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "configMapName": {
+              "type": "string",
+              "default": ""
+            },
+            "fileKey": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      }
+    },
+    "bridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resources": {
+          "type": "object",
+          "default": {},
+          "description": "Bridge container resource requests and limits."
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Split bridgev2 config extras. baseExtra merges at root, networkExtra is nested under network. Overlaps with Helm-managed keys fail template rendering. logging and local double_puppet secret are managed by top-level values.",
+      "properties": {
+        "baseExtra": {
+          "type": "string",
+          "default": "",
+          "description": "Shared bridgev2 config YAML merged at top-level. Must be a YAML map and must not contain top-level network or logging."
+        },
+        "networkExtra": {
+          "type": "string",
+          "default": "",
+          "description": "Bridge-specific network config YAML merged under top-level network. Must be a YAML map and must not include nested network."
+        }
+      }
+    },
+    "database": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "postgres": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "host": {
+              "type": "string",
+              "default": "",
+              "description": "Optional override. Defaults to bundled Postgres service name when postgres.enabled=true."
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "default": 5432
+            },
+            "user": {
+              "type": "string",
+              "default": "mautrix_signal"
+            },
+            "password": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "default": "mautrix_signal_password"
+                }
+              }
+            },
+            "database": {
+              "type": "string",
+              "default": "mautrix_signal"
+            },
+            "sslMode": {
+              "type": "string",
+              "default": "prefer"
+            }
+          }
+        }
+      }
+    },
+    "postgres": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "type": "string",
+              "default": "postgres"
+            },
+            "tag": {
+              "type": "string",
+              "default": "16-alpine"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "enum": [
+                "Always",
+                "IfNotPresent",
+                "Never"
+              ],
+              "default": "IfNotPresent"
+            }
+          }
+        },
+        "service": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "default": 5432
+            }
+          }
+        },
+        "persistence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "accessMode": {
+              "type": "string",
+              "enum": [
+                "ReadWriteOnce",
+                "ReadOnlyMany",
+                "ReadWriteMany",
+                "ReadWriteOncePod"
+              ],
+              "default": "ReadWriteOnce"
+            },
+            "size": {
+              "type": "string",
+              "default": "10Gi"
+            },
+            "storageClassName": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        },
+        "podSecurityContext": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "seccompProfile": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "RuntimeDefault",
+                    "Unconfined",
+                    "Localhost"
+                  ],
+                  "default": "RuntimeDefault"
+                },
+                "localhostProfile": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            }
+          }
+        },
+        "securityContext": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "allowPrivilegeEscalation": {
+              "type": "boolean",
+              "default": false
+            },
+            "readOnlyRootFilesystem": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "default": {}
+        }
+      }
+    },
+    "probes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "liveness": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "path": {
+              "type": "string",
+              "default": "/_matrix/mau/live"
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 20
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 30
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 5
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3
+            }
+          }
+        },
+        "readiness": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "path": {
+              "type": "string",
+              "default": "/_matrix/mau/ready"
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 10
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 15
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 5
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3
+            }
+          }
+        }
+      }
+    }
+  }
+}

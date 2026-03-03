@@ -52,3 +52,4 @@ helm upgrade --install <release-name> matrix-helm-charts/<chart-name> --namespac
 | `mautrix-whatsapp` | `0.1.0` | `v0.2602.0` | [mautrix/whatsapp](https://github.com/mautrix/whatsapp) | A Matrix-WhatsApp puppeting bridge built on the shared `mautrix-go-base` chart library. |
 | `mautrix-twitter` | `0.1.0` | `v0.2511.0` | [mautrix/twitter](https://github.com/mautrix/twitter) | A Matrix-Twitter puppeting bridge built on the shared `mautrix-go-base` chart library. |
 | `mautrix-bluesky` | `0.1.0` | `v0.2510.0` | [mautrix/bluesky](https://github.com/mautrix/bluesky) | A Matrix-Bluesky puppeting bridge built on the shared `mautrix-go-base` chart library. |
+| `mautrix-signal` | `0.1.0` | `v0.2602.2` | [mautrix/signal](https://github.com/mautrix/signal) | A Matrix-Signal puppeting bridge built on the shared `mautrix-go-base` chart library. |

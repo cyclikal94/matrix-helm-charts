@@ -1,0 +1,22 @@
+#      .
+#     / V\
+#   / `  /
+#  <<   |    External Postgres example for mautrix-signal.
+#  /    |    Disable bundled postgres and provide explicit connection fields.
+#
+
+postgres:
+  enabled: false
+
+database:
+  postgres:
+    host: postgres.example.com
+    port: 5432
+    user: mautrix_signal
+    password:
+      value: replace_me
+    database: mautrix_signal
+    sslMode: prefer
+
+homeserver:
+  domain: matrix.example.com
