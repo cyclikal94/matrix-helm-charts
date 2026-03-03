@@ -54,3 +54,4 @@ helm upgrade --install <release-name> matrix-helm-charts/<chart-name> --namespac
 | `mautrix-signal` | `0.1.0` | `v0.2602.2` | [mautrix/signal](https://github.com/mautrix/signal) | A Matrix-Signal puppeting bridge built on the shared `mautrix-go-base` chart library. |
 | `mautrix-slack` | `0.1.0` | `v0.2602.0` | [mautrix/slack](https://github.com/mautrix/slack) | A Matrix-Slack puppeting bridge built on the shared `mautrix-go-base` chart library. |
 | `mautrix-gmessages` | `0.1.0` | `v0.2602.0` | [mautrix/gmessages](https://github.com/mautrix/gmessages) | A Matrix-Gmessages puppeting bridge built on the shared `mautrix-go-base` chart library. |
+| `mautrix-gvoice` | `0.1.0` | `v0.2511.0` | [mautrix/gvoice](https://github.com/mautrix/gvoice) | A Matrix-Gvoice puppeting bridge built on the shared `mautrix-go-base` chart library. |

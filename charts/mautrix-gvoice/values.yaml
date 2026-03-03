@@ -1,0 +1,171 @@
+#      .
+#     / V\
+#   / `  /
+#  <<   |    Default values for mautrix-gvoice Helm chart.
+#  /    |    You should look at the values examples for what to actually apply.
+#
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: dock.mau.dev/mautrix/gvoice
+  # Pinned upstream image/git tag.
+  tag: "v0.2511.0"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 29338
+  publishNotReadyAddresses: true
+
+podSecurityContext:
+  enabled: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  enabled: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+# Bridge log level for chart-managed stdout logging config.
+# Valid: panic, fatal, error, warn, info, debug, trace
+logging: info
+
+homeserver:
+  address: http://ess-synapse.ess.svc.cluster.local:8008
+  # Required: Matrix domain used by homeserver config and registration regex entries.
+  domain: ""
+
+appservice:
+  id: gvoice
+  # Optional override. Defaults to in-cluster service URL.
+  address: ""
+  hostname: 0.0.0.0
+  port: 29338
+  bot:
+    username: gvoicebot
+
+registration:
+  # If empty, sourced from registration.existingSecret when set; otherwise auto-generated when registration.autoGenerate=true.
+  asToken: ""
+  hsToken: ""
+  # Existing Secret containing keys `asToken` and `hsToken`.
+  # When set, no chart-managed runtime Secret is created.
+  existingSecret: ""
+  managedSecret:
+    # Create a chart-managed runtime Secret when existingSecret is not set.
+    enabled: true
+    # Optional override for the managed Secret name.
+    name: ""
+  # Auto-generate missing runtime secrets only when using a chart-managed Secret.
+  autoGenerate: true
+  # Optional override. Defaults to appservice.address value.
+  serviceUrl: ""
+  # Optional override. If empty, a regex based on appservice.id and homeserver.domain is used.
+  userRegex: ""
+  # Optional override. Defaults to appservice.bot.username.
+  senderLocalpart: ""
+  rateLimited: false
+  # Optional namespace for an additional Synapse registration ConfigMap copy.
+  # A cross-namespace copy is created only when this is non-empty and different from the release namespace.
+  synapseNamespace: ""
+  # Leave empty to derive from release name, e.g. "<release>-mautrix-gvoice-registration".
+  synapseConfigMapName: ""
+
+doublePuppet:
+  enabled: true
+  registration:
+    # Optional override. Defaults to "doublepuppet-<mautrix-go-base-version>".
+    id: ""
+    # If empty, resolved from registration.existingSecret, reuseExisting ConfigMap, managed Secret, or auto-generate.
+    asToken: ""
+    hsToken: ""
+    senderLocalpart: ""
+    # Existing Secret containing keys `asToken`, `hsToken`, and `senderLocalpart`.
+    # When set, chart-managed double puppet runtime Secret is not created.
+    existingSecret: ""
+    managedSecret:
+      # Create a chart-managed double puppet runtime Secret when existingSecret is not set.
+      enabled: true
+      # Optional override for managed Secret name.
+      name: ""
+    # Auto-generate missing double puppet registration values when using chart-managed Secret mode.
+    autoGenerate: true
+    rateLimited: false
+    # Optional override. Defaults to "<doublePuppet.registration.id>-registration".
+    configMapName: ""
+    fileKey: appservice-registration-doublepuppet.yaml
+  reuseExisting:
+    # Look up existing Synapse double puppet registration ConfigMap and reuse tokens when found.
+    enabled: true
+    # Optional overrides for reuse lookup source.
+    configMapName: ""
+    fileKey: ""
+
+bridge:
+  resources: {}
+
+config:
+  # Shared bridgev2 config YAML merged at top-level in generated config.yaml.
+  # If this overlaps with Helm-managed keys, template rendering fails.
+  # Do not place `logging` here; use top-level `logging`.
+  # Do not place `network` here; use config.networkExtra for bridge-specific config.
+  baseExtra: ""
+  # Bridge-specific mautrix-gvoice network config YAML.
+  # This is automatically nested under top-level `network:` in generated config.yaml.
+  # Do not include a `network:` key in this block.
+  networkExtra: ""
+
+database:
+  postgres:
+    # Optional override. Defaults to bundled Postgres service when postgres.enabled=true.
+    host: ""
+    port: 5432
+    user: mautrix_gvoice
+    password:
+      value: mautrix_gvoice_password
+    database: mautrix_gvoice
+    sslMode: prefer
+
+postgres:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    storageClassName: ""
+  podSecurityContext:
+    enabled: true
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    enabled: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+  resources: {}
+
+probes:
+  liveness:
+    enabled: false
+    path: /_matrix/mau/live
+    initialDelaySeconds: 20
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    enabled: false
+    path: /_matrix/mau/ready
+    initialDelaySeconds: 10
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
