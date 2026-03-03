@@ -8,6 +8,12 @@ A collection of helm charts to deploy services alongside Matrix, with example `v
 
 ## Usage
 
+Generally speaking, installation / usage follows these steps:
+
+1. You configure a `values.yaml` file for your environment then deploy the helm chart using it. (Matrix-specific `values.yaml` files in this repository are provided as examples, just replace the placeholder values).
+2. Point your Synapse deployment at the generated App Service Registration file, i.e. if using ESS Community, just redeploy with the sample `values.yaml` per the chart `README.md`.
+3. Start a DM with the bot `@componentnamebot:example.com`, i.e. `@whatsappbot:example.com`, login etc.
+
 ### OCI Registry (Preferred)
 
 All charts are published as OCI artifacts on GHCR:
