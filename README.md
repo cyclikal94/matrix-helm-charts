@@ -52,6 +52,8 @@ helm upgrade --install <release-name> matrix-helm-charts/<chart-name> --namespac
 
 For the go bridges, in order to reduce duplication, they use a common base chart, which is then extended by specific charts for each bridge.
 
+Double puppetting is enabled by default, and as such, any charts sharing the same `mautrix-go-base` will use the same double puppet App Service registration automatically.
+
 | Link | Component | Helm Chart Version | App Version | Repository | Description |
 | --- | --- | --- | --- | --- | --- |
 | [📎](charts/mautrix-go-base/README.md) | `mautrix-go-base` | `0.1.4` | `0.0.0` | N/A | The base chart used for all `mautrix-` go bridges. |
