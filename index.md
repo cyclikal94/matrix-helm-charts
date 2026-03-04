@@ -70,6 +70,7 @@ Double puppetting is enabled by default, and as such, any charts sharing the sam
 | [📎](charts/mautrix-gvoice/README.md) | `mautrix-gvoice` | `0.1.1` | `v0.2511.0` | [mautrix/gvoice](https://github.com/mautrix/gvoice) | A Matrix-Google Voice puppeting bridge. |
 | [📎](charts/mautrix-linkedin/README.md) | `mautrix-linkedin` | `0.1.1` | `v0.2602.0` | [mautrix/linkedin](https://github.com/mautrix/linkedin) | A Matrix-LinkedIn puppeting bridge. |
 | [📎](charts/mautrix-zulip/README.md) | `mautrix-zulip` | `0.1.1` | `v0.2511.0` | [mautrix/zulip](https://github.com/mautrix/zulip) | A Matrix-Zulip puppeting bridge. |
+| [📎](charts/mautrix-meta/README.md) | `mautrix-meta` | `0.1.0` | `v0.2602.0` | [mautrix/meta](https://github.com/mautrix/meta) | A Matrix-Meta puppeting bridge. |
 
 ## Credits
 
