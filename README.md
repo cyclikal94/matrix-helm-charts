@@ -55,7 +55,7 @@ Given this is new, I'm actively looking for useful new charts to make, I'm prior
 
 </td></tr><tr><td colspan="2">
 
-HTTP-based pub-sub notification service. Useful to allow providing Matrix push notifications on Android without Google.
+HTTP-based pub-sub notification service. Useful to allow providing Matrix push notifications on Android without Google. You'll need to be using a Matrix Android client that supports serving push notification via UnifiedPush, i.e. `Element X`.
 
 </td></tr></table>
 
