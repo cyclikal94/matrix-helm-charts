@@ -114,8 +114,6 @@ Double puppetting is enabled by default, and as such, any charts sharing the sam
 > [!NOTE]
 > The `mautrix-go-base` components are in-progress, though `mautrix-whatsapp` and `mautrix-linkedin` have been deployed and appear to be working (including Double Puppetting) but YMMV so for now they are `1.0.X` until I can fully test.
 
-##### Base Chart
-
 <table><tr><td>
 
 [![mautrix-go-base](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-go-base%5B0%5D.version&label=mautrix-go-base%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-go-base/README.md)
@@ -129,8 +127,6 @@ Double puppetting is enabled by default, and as such, any charts sharing the sam
 The base chart used for all `mautrix-` go bridges. Created in order to reduce duplication, all dependant charts use this base chart, then extend as needed for bridge specifics.
 
 </td></tr></table>
-
-##### Bridge Charts
 
 <table><tr><td>
 
