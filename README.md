@@ -1,3 +1,5 @@
+![Matrix Helm Charts](https://cyclikal.dev/matrix-helm-charts/assets/banner.svg)
+
 # Matrix Helm Charts
 
 ## Overview
