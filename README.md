@@ -38,8 +38,8 @@ Components are organised into categories copying the [matrix.org Ecosystem](http
 
 Given this is new, I'm actively looking for useful new charts to make, I'm prioritising projects listed on [matrix.org Ecosystem](https://matrix.org/ecosystem/) likely filtering on a "Maturity" of `Stable` / `Beta` - if you have suggestions, please do raise an issue!
 
-[!NOTE]
-Please note that I am actively testing each helm chart and plan to make `1.0.0` releases only after each have been tested / considered ready. For now, `ntfy`, `matrix-appservice-irc` and the two Python-based Mautrix bridges `mautrix-telegram` / `mautrix-googlechat` have been confirmed tested and working, hence `0.9.X` versions, but are due a `1.0.0` after further testing of different configurations / deployments.
+> [!NOTE]
+> Please note that I am actively testing each helm chart and plan to make `1.0.0` releases only after each have been tested / considered ready. For now, `ntfy`, `matrix-appservice-irc` and the two Python-based Mautrix bridges `mautrix-telegram` / `mautrix-googlechat` have been confirmed tested and working, hence `0.9.X` versions, but are due a `1.0.0` after further testing of different configurations / deployments.
 
 ### Tools
 
@@ -70,8 +70,8 @@ For the go bridges, in order to reduce duplication, they use a common base chart
 
 Double puppetting is enabled by default, and as such, any charts sharing the same `mautrix-go-base` chart version will use the same double puppet App Service registration automatically.
 
-[!NOTE]
-The `mautrix-go-base` components are in-progress, though `mautrix-whatsapp` and `mautrix-linkedin` have been deployed and appear to be working (including Double Puppetting) but YMMV so for now they are `1.0.X` until I can fully test.
+> [!NOTE]
+> The `mautrix-go-base` components are in-progress, though `mautrix-whatsapp` and `mautrix-linkedin` have been deployed and appear to be working (including Double Puppetting) but YMMV so for now they are `1.0.X` until I can fully test.
 
 ##### Base Chart
 
