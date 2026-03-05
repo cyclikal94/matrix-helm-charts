@@ -43,7 +43,7 @@ Given this is new, I'm actively looking for useful new charts to make, I'm prior
 
 ### Integrations
 
-<table width="100%"><tr><td>
+<table><tr><td>
 
 [![ntfy](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.ntfy%5B0%5D.version&label=ntfy%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/ntfy/README.md)
 
@@ -59,7 +59,7 @@ HTTP-based pub-sub notification service. You can use this to provide Matrix push
 
 ### Bridges
 
-<table width="100%"><tr><td>
+<table><tr><td>
 
 [![matrix-appservice-irc](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.matrix-appservice-irc%5B0%5D.version&label=matrix-appservice-irc%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/matrix-appservice-irc/README.md)
 
@@ -79,7 +79,7 @@ Given there are so many `mautrix` bridges, I'm collating them under a dedicated 
 
 #### Python Bridges
 
-<table width="100%"><tr><td>
+<table><tr><td>
 
 [![mautrix-googlechat](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-googlechat%5B0%5D.version&label=mautrix-googlechat%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-googlechat/README.md)
 
@@ -91,9 +91,7 @@ Given there are so many `mautrix` bridges, I'm collating them under a dedicated 
 
 A Matrix-Google Chat puppeting bridge.
 
-</td></tr></table>
-
-<table width="100%"><tr><td>
+</td></tr><tr><td>
 
 [![mautrix-telegram](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-telegram%5B0%5D.version&label=mautrix-telegram%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-telegram/README.md)
 
@@ -118,7 +116,7 @@ Double puppetting is enabled by default, and as such, any charts sharing the sam
 
 ##### Base Chart
 
-<table width="100%"><tr><td>
+<table><tr><td>
 
 [![mautrix-go-base](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-go-base%5B0%5D.version&label=mautrix-go-base%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-go-base/README.md)
 
@@ -134,7 +132,7 @@ The base chart used for all `mautrix-` go bridges.
 
 ##### Bridge Charts
 
-<table width="100%"><tr><td>
+<table><tr><td>
 
 [![mautrix-bluesky](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-bluesky%5B0%5D.version&label=mautrix-bluesky%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-bluesky/README.md)
 
@@ -146,9 +144,7 @@ The base chart used for all `mautrix-` go bridges.
 
 A Matrix-Bluesky DM puppeting bridge.
 
-</td></tr></table>
-
-<table width="100%"><tr><td>
+</td></tr><tr><td>
 
 [![mautrix-gmessages](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-gmessages%5B0%5D.version&label=mautrix-gmessages%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-gmessages/README.md)
 
@@ -160,9 +156,7 @@ A Matrix-Bluesky DM puppeting bridge.
 
 A Matrix-Google Messages puppeting bridge.
 
-</td></tr></table>
-
-<table width="100%"><tr><td>
+</td></tr><tr><td>
 
 [![mautrix-gvoice](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-gvoice%5B0%5D.version&label=mautrix-gvoice%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-gvoice/README.md)
 
@@ -174,9 +168,7 @@ A Matrix-Google Messages puppeting bridge.
 
 A Matrix-Google Voice puppeting bridge.
 
-</td></tr></table>
-
-<table width="100%"><tr><td>
+</td></tr><tr><td>
 
 [![mautrix-linkedin](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-linkedin%5B0%5D.version&label=mautrix-linkedin%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-linkedin/README.md)
 
@@ -188,9 +180,7 @@ A Matrix-Google Voice puppeting bridge.
 
 A Matrix-LinkedIn puppeting bridge.
 
-</td></tr></table>
-
-<table width="100%"><tr><td>
+</td></tr><tr><td>
 
 [![mautrix-meta](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-meta%5B0%5D.version&label=mautrix-meta%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-meta/README.md) 
 
@@ -202,9 +192,7 @@ A Matrix-LinkedIn puppeting bridge.
 
 A Matrix-Meta puppeting bridge.
 
-</td></tr></table>
-
-<table width="100%"><tr><td>
+</td></tr><tr><td>
 
 [![mautrix-signal](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-signal%5B0%5D.version&label=mautrix-signal%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-signal/README.md)
 
@@ -216,9 +204,7 @@ A Matrix-Meta puppeting bridge.
 
 A Matrix-Signal puppeting bridge.
 
-</td></tr></table>
-
-<table width="100%"><tr><td>
+</td></tr><tr><td>
 
 [![mautrix-slack](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-slack%5B0%5D.version&label=mautrix-slack%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-slack/README.md)
 
@@ -230,9 +216,7 @@ A Matrix-Signal puppeting bridge.
 
 A Matrix-Slack puppeting bridge based on [slack-go](https://github.com/slack-go/slack).
 
-</td></tr></table>
-
-<table width="100%"><tr><td>
+</td></tr><tr><td>
 
 [![mautrix-twitter](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-twitter%5B0%5D.version&label=mautrix-twitter%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-twitter/README.md)
 
@@ -244,9 +228,7 @@ A Matrix-Slack puppeting bridge based on [slack-go](https://github.com/slack-go/
 
 A Matrix-Twitter DM puppeting bridge.
 
-</td></tr></table>
-
-<table width="100%"><tr><td>
+</td></tr><tr><td>
 
 [![mautrix-whatsapp](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-whatsapp%5B0%5D.version&label=mautrix-whatsapp%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-whatsapp/README.md)
 
@@ -258,9 +240,7 @@ A Matrix-Twitter DM puppeting bridge.
 
 A Matrix-WhatsApp puppeting bridge based on [whatsmeow](https://github.com/tulir/whatsmeow).
 
-</td></tr></table>
-
-<table width="100%"><tr><td>
+</td></tr><tr><td>
 
 [![mautrix-zulip](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-zulip%5B0%5D.version&label=mautrix-zulip%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/mautrix-zulip/README.md)
 
