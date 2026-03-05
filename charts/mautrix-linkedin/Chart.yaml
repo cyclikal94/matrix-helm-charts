@@ -5,7 +5,7 @@ home: https://docs.mau.fi/bridges/go/linkedin/
 sources:
   - https://github.com/mautrix/linkedin
 type: application
-version: 0.1.1
+version: 0.1.2
 appVersion: "v0.2602.0"
 dependencies:
   - name: mautrix-go-base
