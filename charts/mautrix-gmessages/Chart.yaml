@@ -5,9 +5,9 @@ home: https://docs.mau.fi/bridges/go/gmessages/
 sources:
   - https://github.com/mautrix/gmessages
 type: application
-version: 0.1.2
+version: 1.0.0
 appVersion: "v0.2602.0"
 dependencies:
   - name: mautrix-go-base
-    version: 0.1.4
+    version: 1.0.0
     repository: file://../mautrix-go-base

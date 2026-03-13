@@ -6,5 +6,5 @@ home: https://ntfy.sh
 sources:
   - https://github.com/binwiederhier/ntfy
 type: application
-version: 0.9.7
+version: 1.0.0
 appVersion: "v2.17.0"

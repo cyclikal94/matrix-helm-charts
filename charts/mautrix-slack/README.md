@@ -1,6 +1,9 @@
-# mautrix-slack [![mautrix-slack chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-slack%5B0%5D.version&label=mautrix-slack&logo=helm)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-slack)
+# mautrix-slack [![mautrix-slack chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-slack%5B0%5D.version&label=mautrix-slack&logo=helm&style=for-the-badge)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-slack)
 
 A Matrix-Slack puppeting bridge. See [mautrix/slack](https://github.com/mautrix/slack) for details.
+
+> [!TIP]
+> Not interested in the nitty-gritty technical details? Start with the [INSTALLATION](../../INSTALLATION.md) guide!.
 
 ## Overview
 

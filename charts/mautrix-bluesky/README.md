@@ -1,6 +1,9 @@
-# mautrix-bluesky [![mautrix-bluesky chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-bluesky%5B0%5D.version&label=mautrix-bluesky&logo=helm)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-bluesky)
+# mautrix-bluesky [![mautrix-bluesky chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-bluesky%5B0%5D.version&label=mautrix-bluesky&logo=helm&style=for-the-badge)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-bluesky)
 
 A Matrix-Bluesky puppeting bridge. See [mautrix/bluesky](https://github.com/mautrix/bluesky) for details.
+
+> [!TIP]
+> Not interested in the nitty-gritty technical details? Start with the [INSTALLATION](../../INSTALLATION.md) guide!.
 
 ## Overview
 

@@ -1,6 +1,9 @@
-# mautrix-linkedin [![mautrix-linkedin chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-linkedin%5B0%5D.version&label=mautrix-linkedin&logo=helm)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-linkedin)
+# mautrix-linkedin [![mautrix-linkedin chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-linkedin%5B0%5D.version&label=mautrix-linkedin&logo=helm&style=for-the-badge)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-linkedin)
 
 A Matrix-LinkedIn puppeting bridge. See [mautrix/linkedin](https://github.com/mautrix/linkedin) for details.
+
+> [!TIP]
+> Not interested in the nitty-gritty technical details? Start with the [INSTALLATION](../../INSTALLATION.md) guide!.
 
 ## Overview
 

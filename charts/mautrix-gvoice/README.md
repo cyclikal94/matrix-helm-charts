@@ -1,6 +1,9 @@
-# mautrix-gvoice [![mautrix-gvoice chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-gvoice%5B0%5D.version&label=mautrix-gvoice&logo=helm)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-gvoice)
+# mautrix-gvoice [![mautrix-gvoice chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-gvoice%5B0%5D.version&label=mautrix-gvoice&logo=helm&style=for-the-badge)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-gvoice)
 
 A Matrix-Google-Voice puppeting bridge. See [mautrix/gvoice](https://github.com/mautrix/gvoice) for details.
+
+> [!TIP]
+> Not interested in the nitty-gritty technical details? Start with the [INSTALLATION](../../INSTALLATION.md) guide!.
 
 ## Overview
 

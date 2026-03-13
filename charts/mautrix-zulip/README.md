@@ -1,6 +1,9 @@
-# mautrix-zulip [![mautrix-zulip chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-zulip%5B0%5D.version&label=mautrix-zulip&logo=helm)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-zulip)
+# mautrix-zulip [![mautrix-zulip chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-zulip%5B0%5D.version&label=mautrix-zulip&logo=helm&style=for-the-badge)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-zulip)
 
 A Matrix-Zulip puppeting bridge. See [mautrix/zulip](https://github.com/mautrix/zulip) for details.
+
+> [!TIP]
+> Not interested in the nitty-gritty technical details? Start with the [INSTALLATION](../../INSTALLATION.md) guide!.
 
 ## Overview
 
