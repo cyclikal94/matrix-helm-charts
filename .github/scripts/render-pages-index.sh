@@ -25,8 +25,22 @@ fi
     BEGIN {
       skipped_h1 = 0
       dropped_overview = 0
+      in_admonition = 0
     }
     {
+      if (in_admonition) {
+        if ($0 ~ /^>/) {
+          line = $0
+          sub(/^> ?/, "", line)
+          print line
+          next
+        }
+
+        print "</div>"
+        print ""
+        in_admonition = 0
+      }
+
       if (!skipped_h1 && $0 ~ /^# /) {
         skipped_h1 = 1
         next
@@ -43,7 +57,25 @@ fi
         dropped_overview = 1
       }
 
+      if ($0 ~ /^> \[![A-Z]+\][[:space:]]*$/) {
+        label = $0
+        sub(/^> \[!/, "", label)
+        sub(/\][[:space:]]*$/, "", label)
+        class_name = tolower(label)
+        label = toupper(substr(label, 1, 1)) tolower(substr(label, 2))
+        print "<div class=\"pages-callout pages-callout-" class_name "\" markdown=\"1\">"
+        print "<p class=\"pages-callout-title\">" label "</p>"
+        print ""
+        in_admonition = 1
+        next
+      }
+
       print
+    }
+    END {
+      if (in_admonition) {
+        print "</div>"
+      }
     }
   ' "${readme_path}"
 } | perl -pe 's{<t([dh])\b(?![^>]*\bmarkdown=)([^>]*)>}{<t$1 markdown="1"$2>}g' > "${output_path}"
