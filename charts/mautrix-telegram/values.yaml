@@ -100,6 +100,10 @@ database:
     password:
       # If empty and postgres.enabled=true, reused from the chart-managed Secret when present; otherwise auto-generated.
       value: ""
+      # Existing Secret containing the Postgres password. Mutually exclusive with password.value.
+      existingSecret: ""
+      # Key in existingSecret containing the Postgres password.
+      existingSecretKey: password
     database: mautrix_telegram
     sslMode: disable
 

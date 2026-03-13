@@ -106,22 +106,62 @@ appservice-registration-telegram.yaml
 {{- required "values.database.postgres.user is required" $user -}}
 {{- end -}}
 
+{{- define "mautrix-telegram.databasePostgresManagedSecretKey" -}}
+password
+{{- end -}}
+
+{{- define "mautrix-telegram.databasePostgresPasswordSecretName" -}}
+{{- $postgres := .Values.database.postgres | default dict -}}
+{{- $passwordCfg := (get $postgres "password") | default dict -}}
+{{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
+{{- if ne $existingSecretName "" -}}
+{{- $existingSecretName -}}
+{{- else -}}
+{{- include "mautrix-telegram.postgresFullname" . -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "mautrix-telegram.databasePostgresPasswordSecretKey" -}}
+{{- $postgres := .Values.database.postgres | default dict -}}
+{{- $passwordCfg := (get $postgres "password") | default dict -}}
+{{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
+{{- if ne $existingSecretName "" -}}
+{{- (get $passwordCfg "existingSecretKey") | default "password" -}}
+{{- else -}}
+{{- include "mautrix-telegram.databasePostgresManagedSecretKey" . -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "mautrix-telegram.ensureDatabasePostgresPassword" -}}
 {{- $postgres := .Values.database.postgres | default dict -}}
 {{- if not (hasKey $postgres "_computedPassword") -}}
 {{- $passwordCfg := (get $postgres "password") | default dict -}}
 {{- $password := (get $passwordCfg "value") | default "" -}}
+{{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
+{{- $existingSecretKey := (get $passwordCfg "existingSecretKey") | default "password" -}}
+{{- if and (ne $password "") (ne $existingSecretName "") -}}
+{{- fail "values.database.postgres.password.value and values.database.postgres.password.existingSecret are mutually exclusive" -}}
+{{- end -}}
 {{- if eq $password "" -}}
-{{- if .Values.postgres.enabled -}}
-{{- $existing := lookup "v1" "Secret" .Release.Namespace (include "mautrix-telegram.postgresFullname" .) -}}
-{{- if and $existing (hasKey $existing "data") (hasKey $existing.data "password") -}}
-{{- $password = (index $existing.data "password" | b64dec) -}}
+{{- if ne $existingSecretName "" -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $existingSecretName -}}
+{{- if and $existing (hasKey $existing "data") (hasKey $existing.data $existingSecretKey) -}}
+{{- $password = (index $existing.data $existingSecretKey | b64dec) -}}
+{{- else -}}
+{{- fail (printf "values.database.postgres.password.existingSecret %q must contain key %q in namespace %q" $existingSecretName $existingSecretKey .Release.Namespace) -}}
+{{- end -}}
+{{- else if .Values.postgres.enabled -}}
+{{- $managedSecretName := include "mautrix-telegram.postgresFullname" . -}}
+{{- $managedSecretKey := include "mautrix-telegram.databasePostgresManagedSecretKey" . -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $managedSecretName -}}
+{{- if and $existing (hasKey $existing "data") (hasKey $existing.data $managedSecretKey) -}}
+{{- $password = (index $existing.data $managedSecretKey | b64dec) -}}
 {{- else -}}
 {{- $password = (randAlphaNum 64 | sha256sum) -}}
 {{- end -}}
 {{- end -}}
 {{- if eq $password "" -}}
-{{- fail "values.database.postgres.password.value is required when postgres.enabled=false" -}}
+{{- fail "values.database.postgres.password.value or values.database.postgres.password.existingSecret is required when postgres.enabled=false" -}}
 {{- else -}}
 {{- $_ := set $postgres "_computedPassword" $password -}}
 {{- end -}}
@@ -132,6 +172,16 @@ appservice-registration-telegram.yaml
 {{- define "mautrix-telegram.databasePostgresPassword" -}}
 {{- include "mautrix-telegram.ensureDatabasePostgresPassword" . -}}
 {{- index .Values.database.postgres "_computedPassword" -}}
+{{- end -}}
+
+{{- define "mautrix-telegram.databasePostgresPasswordChecksum" -}}
+{{- include "mautrix-telegram.ensureDatabasePostgresPassword" . -}}
+{{- $payload := dict
+  "secretName" (include "mautrix-telegram.databasePostgresPasswordSecretName" .)
+  "secretKey" (include "mautrix-telegram.databasePostgresPasswordSecretKey" .)
+  "password" (include "mautrix-telegram.databasePostgresPassword" .)
+-}}
+{{- toYaml $payload | sha256sum -}}
 {{- end -}}
 
 {{- define "mautrix-telegram.databaseConnectionString" -}}
