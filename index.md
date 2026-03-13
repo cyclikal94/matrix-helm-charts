@@ -20,6 +20,9 @@ Generally speaking, installation / usage follows these steps:
 2. Point your Synapse deployment at the generated App Service Registration file, i.e. if using ESS Community, just redeploy with the sample `values.yaml` per the chart `README.md`.
 3. Start a DM with the bot `@componentnamebot:example.com`, i.e. `@whatsappbot:example.com`, login etc.
 
+> [!TIP]
+> You should start with the [INSTALLATION](INSTALLATION.md) guide!.
+
 ### OCI Registry (Preferred)
 
 All charts are published as OCI artifacts on GHCR:
@@ -40,12 +43,13 @@ helm upgrade --install <release-name> matrix-helm-charts/<chart-name> --namespac
 
 ## Components
 
+![TIP]
+Click on the desired helm charts' badge to be taken to its README for detailed deployment information.
+
+
 Components are organised into categories copying the [matrix.org Ecosystem](https://matrix.org/ecosystem/) section. As such components will be either `Clients`, `Bridges`, `Servers`, or `Integrations` - where components aren't present on [matrix.org](https://matrix.org/ecosystem/) I'll do my best to put them in an appropriate category. The remaining catefories of `SDKs`, `Distribution` and `Hosting` are unlikely to be applicable here.
 
 Given this is new, I'm actively looking for useful new charts to make, I'm prioritising projects listed on [matrix.org Ecosystem](https://matrix.org/ecosystem/) likely filtering on a "Maturity" of `Stable` / `Beta` - if you have suggestions, please do raise an issue!
-
-> [!NOTE]
-> Please note that I am actively testing each helm chart and plan to make `1.0.0` releases only after each have been tested / considered ready. For now, `ntfy`, `matrix-appservice-irc` and the two Python-based Mautrix bridges `mautrix-telegram` / `mautrix-googlechat` have been confirmed tested and working, hence `0.9.X` versions, but are due a `1.0.0` after further testing of different configurations / deployments.
 
 ### Integrations
 
@@ -116,9 +120,6 @@ A Matrix-Telegram hybrid puppeting/relaybot bridge. Note this is a `mautrix` pyt
 #### Go Bridges
 
 Double puppetting is enabled by default, and as such, any charts sharing the same `mautrix-go-base` chart version will use the same double puppet App Service registration automatically.
-
-> [!NOTE]
-> The `mautrix-go-base` components are in-progress, though `mautrix-whatsapp` and `mautrix-linkedin` have been deployed and appear to be working (including Double Puppetting) but YMMV so for now they are `1.0.X` until I can fully test.
 
 <table><tr><td>
 
