@@ -16,6 +16,9 @@ Generally speaking, installation / usage follows these steps:
 2. Point your Synapse deployment at the generated App Service Registration file, i.e. if using ESS Community, just redeploy with the sample `values.yaml` per the chart `README.md`.
 3. Start a DM with the bot `@componentnamebot:example.com`, i.e. `@whatsappbot:example.com`, login etc.
 
+> [!TIP]
+> You should start with the [INSTALLATION](INSTALLATION.md) guide!.
+
 ### OCI Registry (Preferred)
 
 All charts are published as OCI artifacts on GHCR:
