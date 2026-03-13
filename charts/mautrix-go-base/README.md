@@ -1,4 +1,4 @@
-# mautrix-go-base [![mautrix-go-base chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-go-base%5B0%5D.version&label=mautrix-go-base&logo=helm)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-go-base)
+# mautrix-go-base [![mautrix-go-base chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-go-base%5B0%5D.version&label=mautrix-go-base&logo=helm&style=for-the-badge)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-go-base)
 
 Shared Helm library chart for mautrix Go bridge wrappers.
 

@@ -1,4 +1,4 @@
-# mautrix-gmessages [![mautrix-gmessages chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-gmessages%5B0%5D.version&label=mautrix-gmessages&logo=helm)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-gmessages)
+# mautrix-gmessages [![mautrix-gmessages chart version](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.mautrix-gmessages%5B0%5D.version&label=mautrix-gmessages&logo=helm&style=for-the-badge)](https://github.com/cyclikal94/matrix-helm-charts/tree/main/charts/mautrix-gmessages)
 
 A Matrix-Google-Messages puppeting bridge. See [mautrix/gmessages](https://github.com/mautrix/gmessages) for details.
 
