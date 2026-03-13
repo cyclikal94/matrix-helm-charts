@@ -8,6 +8,10 @@ A collection of helm charts to deploy Matrix-related components into Kubernetes,
 
 All charts are created and tested against a deployed [ESS Community](https://github.com/element-hq/ess-helm) instance but should work with any Matrix deployment accessible from your cluster.
 
+Feel free to join the Matrix Room to discuss:
+
+[![Matrix](https://img.shields.io/matrix/matrix-helm%3Amatrix.org?fetchMode=summary&style=for-the-badge&logo=matrix&label=%23matrix-helm:matrix.org)](https://matrix.to/#/#matrix-helm:matrix.org)
+
 ## Usage
 
 Generally speaking, installation / usage follows these steps:
