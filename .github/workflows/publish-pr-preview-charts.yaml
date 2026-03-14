@@ -120,7 +120,7 @@ jobs:
           base-sha: ${{ needs.resolve-context.outputs.base_sha }}
           head-sha: ${{ needs.resolve-context.outputs.head_sha }}
           pr-number: ${{ needs.resolve-context.outputs.pr_number }}
-          preview-registry: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-preview
+          preview-registry: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -154,6 +154,6 @@ jobs:
           base-sha: ${{ needs.resolve-context.outputs.base_sha }}
           head-sha: ${{ needs.resolve-context.outputs.head_sha }}
           pr-number: ${{ needs.resolve-context.outputs.pr_number }}
-          preview-registry: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-preview
+          preview-registry: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.GITHUB_TOKEN }}

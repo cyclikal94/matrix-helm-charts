@@ -9,6 +9,7 @@ import tempfile
 
 
 LOCAL_DEP_REPO_RE = re.compile(r'^\s*repository:\s*file://\.\./([^"\n#\s]+)\s*$')
+TOP_LEVEL_NAME_RE = re.compile(r'^name:\s*"?([^"\n#]+)"?\s*$', re.MULTILINE)
 TOP_LEVEL_VERSION_RE = re.compile(r'^version:\s*"?([^"\n#]+)"?\s*$', re.MULTILINE)
 DEP_NAME_RE = re.compile(r'^\s*-\s*name:\s*"?([^"\n#]+)"?\s*$')
 DEP_VERSION_RE = re.compile(r'^(\s*version:\s*).*$')
@@ -18,8 +19,15 @@ def run(*args: str, cwd: str | None = None) -> str:
     return subprocess.check_output(list(args), text=True, cwd=cwd).strip()
 
 
-def chart_dependency_graph(charts_root: pathlib.Path) -> tuple[dict[str, pathlib.Path], dict[str, set[str]]]:
+def preview_chart_name(chart_name: str) -> str:
+    return f"{chart_name}-pr"
+
+
+def chart_dependency_graph(
+    charts_root: pathlib.Path,
+) -> tuple[dict[str, pathlib.Path], dict[str, list[str]], dict[str, set[str]]]:
     chart_dirs: dict[str, pathlib.Path] = {}
+    deps_by_chart: dict[str, list[str]] = {}
     consumers_by_dep: dict[str, set[str]] = {}
 
     for chart_yaml in sorted(charts_root.glob("*/Chart.yaml")):
@@ -32,14 +40,15 @@ def chart_dependency_graph(charts_root: pathlib.Path) -> tuple[dict[str, pathlib
             if match:
                 deps.append(match.group(1))
 
+        deps_by_chart[chart_name] = deps
         for dep in deps:
             consumers_by_dep.setdefault(dep, set()).add(chart_name)
 
-    return chart_dirs, consumers_by_dep
+    return chart_dirs, deps_by_chart, consumers_by_dep
 
 
 def detect_changed_charts(repo_root: pathlib.Path, charts_root: pathlib.Path, base_sha: str, head_sha: str) -> list[str]:
-    chart_dirs, consumers_by_dep = chart_dependency_graph(charts_root)
+    chart_dirs, _, consumers_by_dep = chart_dependency_graph(charts_root)
     merge_base = run("git", "merge-base", base_sha, head_sha, cwd=str(repo_root))
     diff_lines = run("git", "diff", "--name-only", merge_base, head_sha, "--", "charts", cwd=str(repo_root)).splitlines()
 
@@ -64,6 +73,21 @@ def detect_changed_charts(repo_root: pathlib.Path, charts_root: pathlib.Path, ba
     return sorted(affected)
 
 
+def dependency_closure(charts_root: pathlib.Path, root_charts: list[str]) -> list[str]:
+    _, deps_by_chart, _ = chart_dependency_graph(charts_root)
+    closure = set(root_charts)
+    queue = list(root_charts)
+
+    while queue:
+        chart = queue.pop(0)
+        for dep in deps_by_chart.get(chart, []):
+            if dep not in closure:
+                closure.add(dep)
+                queue.append(dep)
+
+    return sorted(closure)
+
+
 def write_github_output(output_path: pathlib.Path, charts: list[str]) -> None:
     with output_path.open("a") as handle:
         handle.write(f"has_charts={'true' if charts else 'false'}\n")
@@ -84,10 +108,12 @@ def preview_versions(charts_root: pathlib.Path, charts: list[str], pr_number: st
 
     for chart_name in charts:
         chart_yaml = charts_root / chart_name / "Chart.yaml"
-        match = TOP_LEVEL_VERSION_RE.search(chart_yaml.read_text())
-        if not match:
+        chart_text = chart_yaml.read_text()
+        version_match = TOP_LEVEL_VERSION_RE.search(chart_text)
+        name_match = TOP_LEVEL_NAME_RE.search(chart_text)
+        if not version_match or not name_match:
             raise RuntimeError(f"Unable to find top-level version in {chart_yaml}")
-        base_version = match.group(1).split("+", 1)[0].split("-", 1)[0]
+        base_version = version_match.group(1).split("+", 1)[0].split("-", 1)[0]
         versions[chart_name] = f"{base_version}-{suffix}"
 
     return versions
@@ -102,6 +128,8 @@ def rewrite_chart_versions(charts_root: pathlib.Path, charts: list[str], version
         current_dependency = None
 
         for line in lines:
+            if TOP_LEVEL_NAME_RE.match(line):
+                line = f"name: {preview_chart_name(chart_name)}"
             if TOP_LEVEL_VERSION_RE.match(line):
                 line = f"version: {versions[chart_name]}"
 
@@ -116,6 +144,12 @@ def rewrite_chart_versions(charts_root: pathlib.Path, charts: list[str], version
                 dep_name_match = DEP_NAME_RE.match(line)
                 if dep_name_match:
                     current_dependency = dep_name_match.group(1)
+                    if current_dependency in versions:
+                        line = re.sub(
+                            r'(^\s*-\s*name:\s*).*$',
+                            rf'\g<1>{preview_chart_name(current_dependency)}',
+                            line,
+                        )
                 else:
                     dep_version_match = DEP_VERSION_RE.match(line)
                     if dep_version_match and current_dependency in versions:
@@ -137,7 +171,7 @@ def package_and_push(charts_root: pathlib.Path, charts: list[str], versions: dic
                 subprocess.run(["helm", "dependency", "update", str(chart_dir)], check=True)
 
             subprocess.run(["helm", "package", str(chart_dir), "--destination", package_dir], check=True)
-            package_file = package_dir_path / f"{chart_name}-{versions[chart_name]}.tgz"
+            package_file = package_dir_path / f"{preview_chart_name(chart_name)}-{versions[chart_name]}.tgz"
             if not package_file.exists():
                 raise RuntimeError(f"Failed to locate packaged artifact for {chart_name}")
 
@@ -166,8 +200,9 @@ def command_publish(args: argparse.Namespace) -> int:
         work_charts_root = pathlib.Path(work_dir) / "charts"
         shutil.copytree(charts_root, work_charts_root)
 
-        versions = preview_versions(work_charts_root, charts, args.pr_number, args.head_sha, args.mode)
-        rewrite_chart_versions(work_charts_root, charts, versions)
+        build_charts = dependency_closure(work_charts_root, charts)
+        versions = preview_versions(work_charts_root, build_charts, args.pr_number, args.head_sha, args.mode)
+        rewrite_chart_versions(work_charts_root, build_charts, versions)
         package_and_push(work_charts_root, charts, versions, args.oci_registry)
         versions_output.write_text("".join(f"{chart}={versions[chart]}\n" for chart in charts))
 

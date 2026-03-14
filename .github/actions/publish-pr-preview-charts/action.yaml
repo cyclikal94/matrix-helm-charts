@@ -15,7 +15,7 @@ inputs:
     description: Pull request number
     required: true
   preview-registry:
-    description: Preview GHCR registry path without the oci:// prefix
+    description: OCI registry path without the oci:// prefix
     required: true
   ghcr-username:
     description: Username used for helm registry login
@@ -61,7 +61,7 @@ runs:
           --pr-number "${{ inputs.pr-number }}" \
           --head-sha "${{ inputs.head-sha }}" \
           --mode rolling \
-          --oci-registry "oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}" \
+          --oci-registry "oci://${{ inputs.preview-registry }}" \
           --versions-output "${rolling_versions_file}"
 
         python3 "${{ github.action_path }}/../../scripts/publish_pr_preview_charts.py" publish \
@@ -70,15 +70,17 @@ runs:
           --pr-number "${{ inputs.pr-number }}" \
           --head-sha "${{ inputs.head-sha }}" \
           --mode commit \
-          --oci-registry "oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}/commits" \
+          --oci-registry "oci://${{ inputs.preview-registry }}" \
           --versions-output "${commit_versions_file}"
 
         {
           echo "## PR preview charts"
           echo
-          echo "Published rolling preview charts to \`oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}\` using versions like \`1.0.1-pr.${{ inputs.pr-number }}\`."
+          echo "Published preview charts as \`*-pr\` packages to \`oci://${{ inputs.preview-registry }}\`."
           echo
-          echo "Published immutable commit previews to \`oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}/commits\` using versions like \`1.0.1-pr.${{ inputs.pr-number }}.${{ inputs.head-sha }}\`."
+          echo "Rolling preview versions look like \`1.0.1-pr.${{ inputs.pr-number }}\`."
+          echo
+          echo "Immutable commit preview versions look like \`1.0.1-pr.${{ inputs.pr-number }}.${{ inputs.head-sha }}\`."
           echo
           echo "Charts:"
           while IFS='=' read -r chart version; do
@@ -86,16 +88,21 @@ runs:
               continue
             fi
             immutable_version="$(grep "^${chart}=" "${commit_versions_file}" | cut -d= -f2-)"
+            preview_chart="${chart}-pr"
             echo "- \`${chart}\`"
-            echo "  - rolling: \`oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}/${chart}\` (\`${version}\`)"
-            echo "  - immutable: \`oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}/commits/${chart}\` (\`${immutable_version}\`)"
+            echo "  - package: \`oci://${{ inputs.preview-registry }}/${preview_chart}\`"
+            echo "  - rolling version: \`${version}\`"
+            echo "  - immutable version: \`${immutable_version}\`"
           done < "${rolling_versions_file}"
           echo
           first_chart="$(sed -n '1p' "${charts_file}")"
           if [ -n "${first_chart}" ]; then
+            preview_chart="${first_chart}-pr"
+            first_version="$(grep "^${first_chart}=" "${rolling_versions_file}" | cut -d= -f2-)"
             echo "Example install for the latest build on this PR:"
             echo '```bash'
-            echo "helm upgrade --install \"${first_chart}\" \"oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}/${first_chart}\" \\"
+            echo "helm upgrade --install \"${preview_chart}\" \"oci://${{ inputs.preview-registry }}/${preview_chart}\" \\"
+            echo "  --version \"${first_version}\" \\"
             echo "  --namespace \"${first_chart}\" \\"
             echo "  --create-namespace \\"
             echo "  --values \"./${first_chart}-values.yaml\""
