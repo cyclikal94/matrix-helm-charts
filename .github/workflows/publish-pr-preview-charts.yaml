@@ -167,7 +167,7 @@ jobs:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.GITHUB_TOKEN }}
 
-  comment-preview-builds:
+  pr-preview-comment:
     needs:
       - resolve-context
       - publish-preview-self
@@ -178,6 +178,9 @@ jobs:
       (needs.publish-preview-self.result == 'success' || needs.publish-preview-approved.result == 'success') &&
       (needs.publish-preview-self.outputs.has_charts == 'true' || needs.publish-preview-approved.outputs.has_charts == 'true')
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
       - name: Upsert PR preview comment
         uses: actions/github-script@v7
@@ -185,9 +188,8 @@ jobs:
           COMMENT_PAYLOAD: ${{ needs.publish-preview-self.outputs.comment_payload || needs.publish-preview-approved.outputs.comment_payload }}
         with:
           script: |
-            const marker = "<!-- pr-preview-builds-comment -->";
-            const metadataPrefix = "<!-- pr-preview-builds-metadata:";
-            const metadataRegex = /<!-- pr-preview-builds-metadata:([A-Za-z0-9+/=]+) -->/;
+            const marker = "<!-- pr-preview-comment -->";
+            const metadataRegex = /<!-- pr-preview-comment-metadata:([A-Za-z0-9+/=]+) -->/;
 
             const payload = JSON.parse(process.env.COMMENT_PAYLOAD);
             const prNumber = Number(payload.prNumber);
@@ -248,7 +250,7 @@ jobs:
 
             const lines = [
               marker,
-              `<!-- pr-preview-builds-metadata:${metadata} -->`,
+              `<!-- pr-preview-comment-metadata:${metadata} -->`,
               "Preview charts for this PR have been built and are ready to test.",
               "",
             ];
