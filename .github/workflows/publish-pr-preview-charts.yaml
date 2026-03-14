@@ -25,6 +25,7 @@ concurrency:
 permissions:
   contents: read
   packages: write
+  issues: write
   pull-requests: read
 
 jobs:
@@ -98,6 +99,9 @@ jobs:
       needs.resolve-context.outputs.publish_allowed == 'true' &&
       needs.resolve-context.outputs.pr_author_login == 'cyclikal94'
     runs-on: ubuntu-latest
+    outputs:
+      has_charts: ${{ steps.publish.outputs.has_charts }}
+      comment_payload: ${{ steps.publish.outputs.comment_payload }}
     steps:
       - name: Checkout workflow ref
         uses: actions/checkout@v4
@@ -114,6 +118,7 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Publish previews
+        id: publish
         uses: ./.github/actions/publish-pr-preview-charts
         with:
           source-root: pr-source
@@ -130,6 +135,9 @@ jobs:
       needs.resolve-context.outputs.publish_allowed == 'true' &&
       needs.resolve-context.outputs.pr_author_login != 'cyclikal94'
     runs-on: ubuntu-latest
+    outputs:
+      has_charts: ${{ steps.publish.outputs.has_charts }}
+      comment_payload: ${{ steps.publish.outputs.comment_payload }}
     environment:
       name: pr-preview-publish
     steps:
@@ -148,6 +156,7 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Publish previews
+        id: publish
         uses: ./.github/actions/publish-pr-preview-charts
         with:
           source-root: pr-source
@@ -157,3 +166,134 @@ jobs:
           preview-registry: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.GITHUB_TOKEN }}
+
+  comment-preview-builds:
+    needs:
+      - resolve-context
+      - publish-preview-self
+      - publish-preview-approved
+    if: >-
+      always() &&
+      needs.resolve-context.outputs.publish_allowed == 'true' &&
+      (needs.publish-preview-self.result == 'success' || needs.publish-preview-approved.result == 'success') &&
+      (needs.publish-preview-self.outputs.has_charts == 'true' || needs.publish-preview-approved.outputs.has_charts == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upsert PR preview comment
+        uses: actions/github-script@v7
+        env:
+          COMMENT_PAYLOAD: ${{ needs.publish-preview-self.outputs.comment_payload || needs.publish-preview-approved.outputs.comment_payload }}
+        with:
+          script: |
+            const marker = "<!-- pr-preview-builds-comment -->";
+            const metadataPrefix = "<!-- pr-preview-builds-metadata:";
+            const metadataRegex = /<!-- pr-preview-builds-metadata:([A-Za-z0-9+/=]+) -->/;
+
+            const payload = JSON.parse(process.env.COMMENT_PAYLOAD);
+            const prNumber = Number(payload.prNumber);
+            const registry = payload.registry;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100,
+            });
+
+            const existingComment = comments.find((comment) =>
+              comment.user?.type === "Bot" && comment.body?.includes(marker)
+            );
+
+            let state = {
+              registry,
+              prNumber: payload.prNumber,
+              charts: {},
+            };
+
+            if (existingComment) {
+              const match = existingComment.body.match(metadataRegex);
+              if (match) {
+                try {
+                  state = JSON.parse(Buffer.from(match[1], "base64").toString("utf8"));
+                } catch (error) {
+                  core.warning(`Failed to parse existing preview metadata: ${error.message}`);
+                }
+              }
+            }
+
+            state.registry = registry;
+            state.prNumber = payload.prNumber;
+
+            for (const chartInfo of payload.charts) {
+              const existing = state.charts[chartInfo.chart] || {
+                chart: chartInfo.chart,
+                previewChart: chartInfo.previewChart,
+                rollingVersion: chartInfo.rollingVersion,
+                immutableVersions: [],
+              };
+
+              existing.previewChart = chartInfo.previewChart;
+              existing.rollingVersion = chartInfo.rollingVersion;
+              existing.immutableVersions = existing.immutableVersions || [];
+              existing.immutableVersions = [
+                chartInfo.immutableVersion,
+                ...existing.immutableVersions.filter((value) => value !== chartInfo.immutableVersion),
+              ];
+
+              state.charts[chartInfo.chart] = existing;
+            }
+
+            const sortedCharts = Object.values(state.charts).sort((a, b) => a.chart.localeCompare(b.chart));
+            const metadata = Buffer.from(JSON.stringify(state)).toString("base64");
+
+            const lines = [
+              marker,
+              `<!-- pr-preview-builds-metadata:${metadata} -->`,
+              "Preview charts for this PR have been built and are ready to test.",
+              "",
+            ];
+
+            for (const chart of sortedCharts) {
+              lines.push(`### \`${chart.previewChart}\``);
+              lines.push("");
+              lines.push("Latest rolling build:");
+              lines.push("");
+              lines.push("```bash");
+              lines.push(`export BASE_CHART=${chart.chart}`);
+              lines.push('export CHART="${BASE_CHART}-pr"');
+              lines.push(`export VERSION="${chart.rollingVersion}"`);
+              lines.push("");
+              lines.push('helm upgrade --install "${CHART}" "oci://' + registry + '/${CHART}" \\');
+              lines.push('  --version "${VERSION}" \\');
+              lines.push('  --namespace "${CHART}" \\');
+              lines.push('  --create-namespace \\');
+              lines.push('  --values "./${BASE_CHART}-values.yaml"');
+              lines.push("```");
+              lines.push("");
+              lines.push("Immutable commit builds:");
+              lines.push("");
+              lines.push("Use the same command above with one of these versions:");
+              lines.push("");
+              for (const version of chart.immutableVersions) {
+                lines.push(`- \`--version "${version}"\``);
+              }
+              lines.push("");
+            }
+
+            const body = lines.join("\n").trim();
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }

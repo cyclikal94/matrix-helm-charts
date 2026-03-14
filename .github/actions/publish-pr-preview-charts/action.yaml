@@ -1,6 +1,14 @@
 name: Publish PR Preview Charts
 description: Detect changed charts for a PR and publish rolling and immutable OCI previews.
 
+outputs:
+  has_charts:
+    description: Whether any charts were published
+    value: ${{ steps.prepare.outputs.has_charts }}
+  comment_payload:
+    description: JSON payload describing published preview builds
+    value: ${{ steps.payload.outputs.comment_payload }}
+
 inputs:
   source-root:
     description: Repository checkout containing the PR source to publish
@@ -50,6 +58,7 @@ runs:
         charts_file="${tmp_dir}/charts.txt"
         commit_versions_file="${tmp_dir}/commit-versions.txt"
         rolling_versions_file="${tmp_dir}/rolling-versions.txt"
+        payload_file="${RUNNER_TEMP}/pr-preview-comment-payload.json"
 
         printf '%s\n' "${{ steps.prepare.outputs.charts }}" > "${charts_file}"
 
@@ -109,6 +118,43 @@ runs:
             echo '```'
           fi
         } >> "${GITHUB_STEP_SUMMARY}"
+        python3 <<'PY' > "${payload_file}"
+        import json
+        import pathlib
+
+        charts_file = pathlib.Path("${charts_file}")
+        rolling_versions_file = pathlib.Path("${rolling_versions_file}")
+        commit_versions_file = pathlib.Path("${commit_versions_file}")
+
+        charts = [line.strip() for line in charts_file.read_text().splitlines() if line.strip()]
+        rolling_versions = {}
+        for line in rolling_versions_file.read_text().splitlines():
+            if "=" in line:
+                chart, version = line.split("=", 1)
+                rolling_versions[chart] = version
+
+        commit_versions = {}
+        for line in commit_versions_file.read_text().splitlines():
+            if "=" in line:
+                chart, version = line.split("=", 1)
+                commit_versions[chart] = version
+
+        payload = {
+            "registry": "${{ inputs.preview-registry }}",
+            "prNumber": "${{ inputs.pr-number }}",
+            "charts": [
+                {
+                    "chart": chart,
+                    "previewChart": f"{chart}-pr",
+                    "rollingVersion": rolling_versions[chart],
+                    "immutableVersion": commit_versions[chart],
+                }
+                for chart in charts
+            ],
+        }
+
+        print(json.dumps(payload, separators=(",", ":")))
+        PY
 
     - name: Write no-op summary
       if: steps.prepare.outputs.has_charts != 'true'
@@ -119,3 +165,14 @@ runs:
           echo
           echo "No changed charts were detected for preview publishing."
         } >> "${GITHUB_STEP_SUMMARY}"
+        printf '%s' '{"registry":"${{ inputs.preview-registry }}","prNumber":"${{ inputs.pr-number }}","charts":[]}' > "${RUNNER_TEMP}/pr-preview-comment-payload.json"
+
+    - name: Export comment payload
+      id: payload
+      shell: bash
+      run: |
+        {
+          echo "comment_payload<<EOF"
+          cat "${RUNNER_TEMP}/pr-preview-comment-payload.json"
+          echo "EOF"
+        } >> "${GITHUB_OUTPUT}"
