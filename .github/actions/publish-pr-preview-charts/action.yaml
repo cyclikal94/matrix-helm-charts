@@ -1,0 +1,110 @@
+name: Publish PR Preview Charts
+description: Detect changed charts for a PR and publish rolling and immutable OCI previews.
+
+inputs:
+  base-sha:
+    description: Base commit SHA for the PR
+    required: true
+  head-sha:
+    description: Head commit SHA for the PR
+    required: true
+  pr-number:
+    description: Pull request number
+    required: true
+  preview-registry:
+    description: Preview GHCR registry path without the oci:// prefix
+    required: true
+  ghcr-username:
+    description: Username used for helm registry login
+    required: true
+  ghcr-password:
+    description: Token used for helm registry login
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare preview charts
+      id: prepare
+      shell: bash
+      run: |
+        python3 "${{ github.action_path }}/../../scripts/publish_pr_preview_charts.py" detect \
+          --charts-root charts \
+          --base-sha "${{ inputs.base-sha }}" \
+          --head-sha "${{ inputs.head-sha }}" \
+          --github-output "${GITHUB_OUTPUT}"
+
+    - name: Publish previews
+      if: steps.prepare.outputs.has_charts == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        tmp_dir="$(mktemp -d)"
+        trap 'rm -rf "${tmp_dir}"' EXIT
+
+        charts_file="${tmp_dir}/charts.txt"
+        commit_versions_file="${tmp_dir}/commit-versions.txt"
+        rolling_versions_file="${tmp_dir}/rolling-versions.txt"
+
+        printf '%s\n' "${{ steps.prepare.outputs.charts }}" > "${charts_file}"
+
+        echo "${{ inputs.ghcr-password }}" | helm registry login ghcr.io -u "${{ inputs.ghcr-username }}" --password-stdin
+
+        python3 "${{ github.action_path }}/../../scripts/publish_pr_preview_charts.py" publish \
+          --charts-root charts \
+          --charts-file "${charts_file}" \
+          --pr-number "${{ inputs.pr-number }}" \
+          --head-sha "${{ inputs.head-sha }}" \
+          --mode rolling \
+          --oci-registry "oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}" \
+          --versions-output "${rolling_versions_file}"
+
+        python3 "${{ github.action_path }}/../../scripts/publish_pr_preview_charts.py" publish \
+          --charts-root charts \
+          --charts-file "${charts_file}" \
+          --pr-number "${{ inputs.pr-number }}" \
+          --head-sha "${{ inputs.head-sha }}" \
+          --mode commit \
+          --oci-registry "oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}/commits" \
+          --versions-output "${commit_versions_file}"
+
+        {
+          echo "## PR preview charts"
+          echo
+          echo "Published rolling preview charts to \`oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}\` using versions like \`1.0.1-pr.${{ inputs.pr-number }}\`."
+          echo
+          echo "Published immutable commit previews to \`oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}/commits\` using versions like \`1.0.1-pr.${{ inputs.pr-number }}.${{ inputs.head-sha }}\`."
+          echo
+          echo "Charts:"
+          while IFS='=' read -r chart version; do
+            if [ -z "${chart}" ]; then
+              continue
+            fi
+            immutable_version="$(grep "^${chart}=" "${commit_versions_file}" | cut -d= -f2-)"
+            echo "- \`${chart}\`"
+            echo "  - rolling: \`oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}/${chart}\` (\`${version}\`)"
+            echo "  - immutable: \`oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}/commits/${chart}\` (\`${immutable_version}\`)"
+          done < "${rolling_versions_file}"
+          echo
+          first_chart="$(sed -n '1p' "${charts_file}")"
+          if [ -n "${first_chart}" ]; then
+            echo "Example install for the latest build on this PR:"
+            echo '```bash'
+            echo "helm upgrade --install \"${first_chart}\" \"oci://${{ inputs.preview-registry }}/pr-${{ inputs.pr-number }}/${first_chart}\" \\"
+            echo "  --namespace \"${first_chart}\" \\"
+            echo "  --create-namespace \\"
+            echo "  --values \"./${first_chart}-values.yaml\""
+            echo '```'
+          fi
+        } >> "${GITHUB_STEP_SUMMARY}"
+
+    - name: Write no-op summary
+      if: steps.prepare.outputs.has_charts != 'true'
+      shell: bash
+      run: |
+        {
+          echo "## PR preview charts"
+          echo
+          echo "No changed charts were detected for preview publishing."
+        } >> "${GITHUB_STEP_SUMMARY}"

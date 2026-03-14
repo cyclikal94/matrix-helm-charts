@@ -1,0 +1,147 @@
+name: Publish PR Preview Charts
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - "charts/**"
+      - ".github/actions/publish-pr-preview-charts/**"
+      - ".github/scripts/publish_pr_preview_charts.py"
+      - ".github/workflows/publish-pr-preview-charts.yaml"
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to publish preview charts for"
+        required: true
+        type: string
+
+concurrency:
+  group: pr-chart-preview-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: read
+
+jobs:
+  resolve-context:
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.resolve.outputs.pr_number }}
+      pr_author_login: ${{ steps.resolve.outputs.pr_author_login }}
+      head_repo_owner: ${{ steps.resolve.outputs.head_repo_owner }}
+      head_repo_full_name: ${{ steps.resolve.outputs.head_repo_full_name }}
+      base_sha: ${{ steps.resolve.outputs.base_sha }}
+      head_sha: ${{ steps.resolve.outputs.head_sha }}
+      publish_allowed: ${{ steps.resolve.outputs.publish_allowed }}
+    steps:
+      - name: Resolve PR context
+        id: resolve
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let pr;
+
+            if (context.eventName === "pull_request") {
+              pr = context.payload.pull_request;
+            } else {
+              const prNumberRaw = context.payload.inputs?.pr_number;
+              const prNumber = Number(prNumberRaw);
+              if (!Number.isInteger(prNumber) || prNumber <= 0) {
+                core.setFailed(`Invalid pr_number input: ${prNumberRaw}`);
+                return;
+              }
+
+              const response = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+              });
+              pr = response.data;
+            }
+
+            if (!pr) {
+              core.setFailed("Unable to resolve PR context");
+              return;
+            }
+
+            const prNumber = String(pr.number);
+            const prAuthorLogin = pr.user?.login || "";
+            const headRepoOwner = pr.head?.repo?.owner?.login || "";
+            const headRepoFullName = pr.head?.repo?.full_name || "";
+            const baseSha = pr.base?.sha || "";
+            const headSha = pr.head?.sha || "";
+            const publishAllowed =
+              headRepoOwner === "cyclikal94" &&
+              headRepoFullName === `${context.repo.owner}/${context.repo.repo}`;
+
+            if (!baseSha || !headSha) {
+              core.setFailed("Resolved PR is missing base/head SHA information");
+              return;
+            }
+
+            core.setOutput("pr_number", prNumber);
+            core.setOutput("pr_author_login", prAuthorLogin);
+            core.setOutput("head_repo_owner", headRepoOwner);
+            core.setOutput("head_repo_full_name", headRepoFullName);
+            core.setOutput("base_sha", baseSha);
+            core.setOutput("head_sha", headSha);
+            core.setOutput("publish_allowed", publishAllowed ? "true" : "false");
+
+  publish-preview-self:
+    needs: resolve-context
+    if: >-
+      needs.resolve-context.outputs.publish_allowed == 'true' &&
+      needs.resolve-context.outputs.pr_author_login == 'cyclikal94'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.resolve-context.outputs.head_sha }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Publish previews
+        uses: ./.github/actions/publish-pr-preview-charts
+        with:
+          base-sha: ${{ needs.resolve-context.outputs.base_sha }}
+          head-sha: ${{ needs.resolve-context.outputs.head_sha }}
+          pr-number: ${{ needs.resolve-context.outputs.pr_number }}
+          preview-registry: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-preview
+          ghcr-username: ${{ github.actor }}
+          ghcr-password: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-preview-approved:
+    needs: resolve-context
+    if: >-
+      needs.resolve-context.outputs.publish_allowed == 'true' &&
+      needs.resolve-context.outputs.pr_author_login != 'cyclikal94'
+    runs-on: ubuntu-latest
+    environment:
+      name: pr-preview-publish
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.resolve-context.outputs.head_sha }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Publish previews
+        uses: ./.github/actions/publish-pr-preview-charts
+        with:
+          base-sha: ${{ needs.resolve-context.outputs.base_sha }}
+          head-sha: ${{ needs.resolve-context.outputs.head_sha }}
+          pr-number: ${{ needs.resolve-context.outputs.pr_number }}
+          preview-registry: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-preview
+          ghcr-username: ${{ github.actor }}
+          ghcr-password: ${{ secrets.GITHUB_TOKEN }}
