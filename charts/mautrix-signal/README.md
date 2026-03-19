@@ -16,7 +16,7 @@ This chart deploys `mautrix-signal` with:
 - Automatic double puppeting registration resources (runtime Secret + ConfigMap)
 - Optional bundled Postgres `StatefulSet`
 
-Default image/app version tracks upstream image/git tag `v0.2602.2`.
+Default image/app version tracks upstream image/git tag `v0.2603.0`.
 
 ## Kubernetes behavior
 
