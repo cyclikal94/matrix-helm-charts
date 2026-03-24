@@ -92,7 +92,12 @@ database:
     port: 5432
     user: mautrix_googlechat
     password:
-      value: mautrix_googlechat_password
+      # If empty and postgres.enabled=true, reused from the chart-managed Secret when present; otherwise auto-generated.
+      value: ""
+      # Existing Secret containing the Postgres password. Mutually exclusive with password.value.
+      existingSecret: ""
+      # Key in existingSecret containing the Postgres password.
+      existingSecretKey: password
     database: mautrix_googlechat
     sslMode: disable
 

@@ -5,9 +5,9 @@ home: https://docs.mau.fi/bridges/go/slack/
 sources:
   - https://github.com/mautrix/slack
 type: application
-version: 1.0.0
+version: 1.0.1
 appVersion: "v0.2602.0"
 dependencies:
   - name: mautrix-go-base
-    version: 1.0.0
+    version: 1.0.1
     repository: file://../mautrix-go-base

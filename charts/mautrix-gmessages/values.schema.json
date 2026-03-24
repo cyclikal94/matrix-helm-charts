@@ -402,7 +402,17 @@
               "properties": {
                 "value": {
                   "type": "string",
-                  "default": "mautrix_gmessages_password"
+                  "description": "Inline Postgres password. Mutually exclusive with existingSecret. If empty and existingSecret is unset, sourced from the chart-managed Secret when present or auto-generated when postgres.enabled=true. Required, or provide existingSecret, when postgres.enabled=false."
+                },
+                "existingSecret": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Existing Secret containing the Postgres password. Mutually exclusive with value. Used for both external and bundled Postgres when set."
+                },
+                "existingSecretKey": {
+                  "type": "string",
+                  "default": "password",
+                  "description": "Key in existingSecret containing the Postgres password."
                 }
               }
             },

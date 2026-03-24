@@ -5,5 +5,5 @@ home: https://docs.mau.fi/bridges/python/googlechat/
 sources:
   - https://github.com/mautrix/googlechat
 type: application
-version: 1.0.0
+version: 1.0.1
 appVersion: "v0.5.2"

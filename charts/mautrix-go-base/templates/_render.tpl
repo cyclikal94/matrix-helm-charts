@@ -231,7 +231,8 @@ data:
 {{- end -}}
 
 {{- define "mautrix-go-base.postgresSecret" -}}
-{{- if .Values.postgres.enabled }}
+{{- $passwordCfg := (get (.Values.database.postgres | default dict) "password") | default dict -}}
+{{- if and .Values.postgres.enabled (eq ((get $passwordCfg "existingSecret") | default "") "") }}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -282,7 +283,7 @@ spec:
       labels:
         {{- include "mautrix-go-base.componentSelectorLabels" (dict "context" . "component" "postgres") | nindent 8 }}
       annotations:
-        checksum/secret: {{ include (print $.Template.BasePath "/postgres-secret.yaml") . | sha256sum }}
+        checksum/secret: {{ include "mautrix-go-base.databasePostgresPasswordChecksum" . }}
     spec:
       {{- if .Values.postgres.podSecurityContext.enabled }}
       {{- $podSecurityContext := omit .Values.postgres.podSecurityContext "enabled" }}
@@ -310,8 +311,8 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mautrix-go-base.postgresFullname" . }}
-                  key: password
+                  name: {{ include "mautrix-go-base.databasePostgresPasswordSecretName" . }}
+                  key: {{ include "mautrix-go-base.databasePostgresPasswordSecretKey" . }}
           ports:
             - name: postgres
               containerPort: {{ .Values.postgres.service.port }}

@@ -205,6 +205,10 @@ synapse:
 
 Ready-to-use file: `values.external.example.yaml`
 
+If `database.postgres.password.value` is empty, the chart resolves it from `database.postgres.password.existingSecret` when set, otherwise from the chart-managed Postgres Secret when present, otherwise it generates a 64-hex-char password for bundled Postgres on first install.
+
+`database.postgres.password.value` and `database.postgres.password.existingSecret` are mutually exclusive. The existing Secret is used for both bundled and external Postgres when set. Switching between password sources is allowed, and it is the operator's responsibility to ensure the selected password matches the database.
+
 Equivalent inline values:
 
 ```yaml
@@ -220,6 +224,9 @@ database:
     user: matrix_irc
     password:
       value: replace_me
+      # Remove `value` and replace with the below to use an external secret
+			# existingSecret: my-postgres-password
+      # existingSecretKey: password
     database: matrix_irc
     sslMode: prefer
 ```

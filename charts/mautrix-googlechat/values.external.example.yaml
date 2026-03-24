@@ -15,6 +15,9 @@ database:
     user: mautrix_googlechat
     password:
       value: replace_me
+      # Remove `value` and replace with the below to use an external secret
+			# existingSecret: my-postgres-password
+      # existingSecretKey: password
     database: mautrix_googlechat
     sslMode: require
 

@@ -6,5 +6,5 @@ sources:
   - https://github.com/mautrix
   - https://github.com/cyclikal94/matrix-helm-charts
 type: library
-version: 1.0.0
+version: 1.0.1
 appVersion: "0.0.0"
