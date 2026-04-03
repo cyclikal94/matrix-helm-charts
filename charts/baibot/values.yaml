@@ -1,0 +1,35 @@
+#      .
+#     / V\
+#   / `  /
+#  <<   |    Default values for baibot Helm chart.
+#  /    |    You should look at the values examples for what to actually apply.
+#
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/etkecc/baibot
+  tag: "v1.17.0"
+  pullPolicy: IfNotPresent
+
+podSecurityContext:
+  enabled: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  enabled: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+resources: {}
+
+persistence:
+  enabled: true
+
+config:
+  extra: ""

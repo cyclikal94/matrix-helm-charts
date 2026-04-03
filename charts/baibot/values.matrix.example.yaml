@@ -1,0 +1,79 @@
+#      .
+#     / V\
+#   / `  /
+#  <<   |    Matrix example with recommended config for baibot.
+#  /    |    This is a ready skeleton. Secrets can be moved to Kubernetes Secrets later.
+#
+
+user:
+  password: change_me
+  # Recommended production alternative:
+  # existingSecret: baibot-user
+
+# Persistence is enabled by default.
+# Recommended production alternative:
+# persistence:
+#   existingSecret: baibot-persistence
+
+# Recommended production alternative for static agent API keys:
+# agents:
+#   apiKeys:
+#     existingSecret: baibot-agent-api-keys
+
+config:
+  extra: |
+    homeserver:
+      server_name: matrix.example.com
+      url: http://ess-synapse.ess.svc.cluster.local:8008
+
+    user:
+      mxid_localpart: baibot
+      name: baibot
+      avatar: null
+
+    command_prefix: "!bai"
+
+    access:
+      admin_patterns:
+        - "@admin:matrix.example.com"
+
+    agents:
+      static_definitions:
+        - id: openai
+          provider: openai
+          config:
+            base_url: https://api.openai.com/v1
+            text_generation:
+              model_id: gpt-5.4
+              prompt: "You are a brief, but helpful bot called {{ baibot_name }} powered by the {{ baibot_model_id }} model. The date/time of this conversation's start is: {{ baibot_conversation_start_time_utc }}."
+              temperature: 1.0
+              max_response_tokens: null
+              max_completion_tokens: 128000
+              max_context_tokens: 400000
+              tools:
+                web_search: false
+                code_interpreter: false
+            speech_to_text:
+              model_id: whisper-1
+            text_to_speech:
+              model_id: tts-1-hd
+              voice: onyx
+              speed: 1.0
+              response_format: opus
+            image_generation:
+              model_id: gpt-image-1.5
+              style: null
+              size: null
+              quality: null
+
+    initial_global_config:
+      handler:
+        catch_all: null
+        text_generation: static/openai
+        text_to_speech: static/openai
+        speech_to_text: static/openai
+        image_generation: static/openai
+      user_patterns:
+        - "@*:matrix.example.com"
+
+    logging: warn,mxlink=debug,baibot=debug
