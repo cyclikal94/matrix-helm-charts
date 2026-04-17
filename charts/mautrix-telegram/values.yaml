@@ -10,7 +10,7 @@ fullnameOverride: ""
 
 image:
   repository: dock.mau.dev/mautrix/telegram
-  tag: "v0.15.3"
+  tag: "v0.2604.0"
   pullPolicy: IfNotPresent
 
 service:
