@@ -11,7 +11,7 @@ fullnameOverride: ""
 image:
   repository: dock.mau.dev/mautrix/signal
   # Pinned upstream image/git tag.
-  tag: "v0.2602.2"
+  tag: "v0.2604.0"
   pullPolicy: IfNotPresent
 
 service:
