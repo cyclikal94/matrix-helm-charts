@@ -16,7 +16,7 @@ This chart deploys `mautrix-gvoice` with:
 - Automatic double puppeting registration resources (runtime Secret + ConfigMap)
 - Optional bundled Postgres `StatefulSet`
 
-Default image/app version tracks upstream image/git tag `v0.2511.0`.
+Default image/app version tracks upstream image/git tag `v0.2604.0`.
 
 ## Kubernetes behavior
 
