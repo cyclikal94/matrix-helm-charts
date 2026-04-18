@@ -10,8 +10,8 @@ fullnameOverride: ""
 
 image:
   repository: dock.mau.dev/mautrix/whatsapp
-  # Upstream release v26.02 is tagged as v0.2602.0 in git/image tags.
-  tag: "v0.2602.0"
+  # Upstream release v26.02 is tagged as v0.2604.0 in git/image tags.
+  tag: "v0.2604.0"
   pullPolicy: IfNotPresent
 
 service:

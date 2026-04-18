@@ -16,7 +16,7 @@ This chart deploys `mautrix-whatsapp` with:
 - Automatic double puppeting registration resources (runtime Secret + ConfigMap)
 - Optional bundled Postgres `StatefulSet`
 
-Default image/app version tracks upstream image/git tag `v0.2602.0` (release `v26.02`).
+Default image/app version tracks upstream image/git tag `v0.2604.0` (release `v26.02`).
 
 ## Kubernetes behavior
 

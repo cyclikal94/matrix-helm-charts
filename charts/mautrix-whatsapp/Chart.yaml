@@ -5,8 +5,8 @@ home: https://docs.mau.fi/bridges/go/whatsapp/
 sources:
   - https://github.com/mautrix/whatsapp
 type: application
-version: 1.0.0
-appVersion: "v0.2602.0"
+version: 1.1.0
+appVersion: "v0.2604.0"
 dependencies:
   - name: mautrix-go-base
     version: 1.0.0
