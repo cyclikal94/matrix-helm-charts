@@ -38,7 +38,7 @@
         },
         "tag": {
           "type": "string",
-          "default": "v2.17.0",
+          "default": "v2.22.0",
           "description": "Container image tag/version to deploy."
         },
         "pullPolicy": {
