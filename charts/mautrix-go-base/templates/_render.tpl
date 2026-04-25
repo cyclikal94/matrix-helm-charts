@@ -312,6 +312,13 @@ spec:
                 secretKeyRef:
                   name: {{ include "mautrix-go-base.postgresFullname" . }}
                   key: password
+            # Put the actual data dir in a subpath of the volume mount so the
+            # postgres entrypoint's `chmod` succeeds when running as an
+            # arbitrary high UID (OpenShift's default SCC). The mount itself
+            # is owned root:fsGroup with g+rwx; the subpath is created by
+            # postgres at first run with the right perms.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           ports:
             - name: postgres
               containerPort: {{ .Values.postgres.service.port }}
