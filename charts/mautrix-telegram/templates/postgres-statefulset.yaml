@@ -46,6 +46,12 @@ spec:
                 secretKeyRef:
                   name: {{ include "mautrix-telegram.postgresFullname" . }}
                   key: password
+            # PGDATA in a subpath so postgres entrypoint's chmod succeeds
+            # under OpenShift's arbitrary high UID (the volume mount is
+            # owned root:fsGroup g+rwx; the subpath is created by postgres
+            # at first run with its own ownership).
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           ports:
             - name: postgres
               containerPort: {{ .Values.postgres.service.port }}
