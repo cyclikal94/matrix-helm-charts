@@ -34,11 +34,13 @@ jobs:
     outputs:
       pr_number: ${{ steps.resolve.outputs.pr_number }}
       pr_author_login: ${{ steps.resolve.outputs.pr_author_login }}
+      head_ref: ${{ steps.resolve.outputs.head_ref }}
       head_repo_owner: ${{ steps.resolve.outputs.head_repo_owner }}
       head_repo_full_name: ${{ steps.resolve.outputs.head_repo_full_name }}
       base_sha: ${{ steps.resolve.outputs.base_sha }}
       head_sha: ${{ steps.resolve.outputs.head_sha }}
       publish_allowed: ${{ steps.resolve.outputs.publish_allowed }}
+      is_trusted_bump_dispatch: ${{ steps.resolve.outputs.is_trusted_bump_dispatch }}
     steps:
       - name: Resolve PR context
         id: resolve
@@ -72,6 +74,7 @@ jobs:
 
             const prNumber = String(pr.number);
             const prAuthorLogin = pr.user?.login || "";
+            const headRef = pr.head?.ref || "";
             const headRepoOwner = pr.head?.repo?.owner?.login || "";
             const headRepoFullName = pr.head?.repo?.full_name || "";
             const baseSha = pr.base?.sha || "";
@@ -79,6 +82,11 @@ jobs:
             const publishAllowed =
               headRepoOwner === "cyclikal94" &&
               headRepoFullName === `${context.repo.owner}/${context.repo.repo}`;
+            const isBumpActionPr = /^bump-action\/.+-version-update$/.test(headRef);
+            const isTrustedBumpDispatch =
+              context.eventName === "workflow_dispatch" &&
+              prAuthorLogin === "github-actions[bot]" &&
+              isBumpActionPr;
 
             if (!baseSha || !headSha) {
               core.setFailed("Resolved PR is missing base/head SHA information");
@@ -87,17 +95,22 @@ jobs:
 
             core.setOutput("pr_number", prNumber);
             core.setOutput("pr_author_login", prAuthorLogin);
+            core.setOutput("head_ref", headRef);
             core.setOutput("head_repo_owner", headRepoOwner);
             core.setOutput("head_repo_full_name", headRepoFullName);
             core.setOutput("base_sha", baseSha);
             core.setOutput("head_sha", headSha);
             core.setOutput("publish_allowed", publishAllowed ? "true" : "false");
+            core.setOutput("is_trusted_bump_dispatch", isTrustedBumpDispatch ? "true" : "false");
 
   publish-preview-self:
     needs: resolve-context
     if: >-
       needs.resolve-context.outputs.publish_allowed == 'true' &&
-      needs.resolve-context.outputs.pr_author_login == 'cyclikal94'
+      (
+        needs.resolve-context.outputs.pr_author_login == 'cyclikal94' ||
+        needs.resolve-context.outputs.is_trusted_bump_dispatch == 'true'
+      )
     runs-on: ubuntu-latest
     outputs:
       has_charts: ${{ steps.publish.outputs.has_charts }}
@@ -133,7 +146,8 @@ jobs:
     needs: resolve-context
     if: >-
       needs.resolve-context.outputs.publish_allowed == 'true' &&
-      needs.resolve-context.outputs.pr_author_login != 'cyclikal94'
+      needs.resolve-context.outputs.pr_author_login != 'cyclikal94' &&
+      needs.resolve-context.outputs.is_trusted_bump_dispatch != 'true'
     runs-on: ubuntu-latest
     outputs:
       has_charts: ${{ steps.publish.outputs.has_charts }}

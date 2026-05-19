@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -454,6 +455,7 @@ jobs:
             }
 
       - name: Create pull request
+        id: create_pr
         if: steps.update.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
@@ -474,3 +476,35 @@ jobs:
             - Release notes: [${{ matrix.owner }}/${{ matrix.repo }} ${{ matrix.latest_tag }}](${{ matrix.release_url }})
 
             Please review upstream changes before merging.
+
+      - name: Dispatch PR preview workflow
+        if: >-
+          steps.update.outputs.changed == 'true' &&
+          steps.create_pr.outputs.pull-request-number != '' &&
+          (steps.create_pr.outputs.pull-request-operation == 'created' ||
+          steps.create_pr.outputs.pull-request-operation == 'updated')
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.ESS_BOT_GITHUB_TOKEN || github.token }}
+          script: |
+            const pullRequestNumber = String("${{ steps.create_pr.outputs.pull-request-number }}").trim();
+            const workflowRef = context.payload.repository.default_branch;
+
+            if (!pullRequestNumber) {
+              core.setFailed("create-pull-request did not return a pull-request-number output.");
+              return;
+            }
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "publish-pr-preview-charts.yaml",
+              ref: workflowRef,
+              inputs: {
+                pr_number: pullRequestNumber,
+              },
+            });
+
+            core.info(
+              `Dispatched publish-pr-preview-charts.yaml for PR #${pullRequestNumber} from ref ${workflowRef}.`
+            );
