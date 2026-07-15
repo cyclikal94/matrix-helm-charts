@@ -56,6 +56,33 @@ spec:
             {{- include (printf "%s.bridgeCommand" .Chart.Name) . | nindent 12 }}
           args:
             {{- include (printf "%s.bridgeArgs" .Chart.Name) . | nindent 12 }}
+          {{- $dbExistingSecret := eq (include "mautrix-go-base.databasePostgresUseExistingSecret" .) "true" }}
+          {{- $registrationExistingSecret := eq (include "mautrix-go-base.registrationUseExistingSecret" .) "true" }}
+          {{- if or $dbExistingSecret $registrationExistingSecret }}
+          env:
+            {{- if $registrationExistingSecret }}
+            - name: {{ include "mautrix-go-base.envConfigPrefix" . }}{{ include "mautrix-go-base.runtimeSecretEnvKey" (dict "key" "asToken") }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mautrix-go-base.runtimeSecretName" . }}
+                  key: asToken
+            - name: {{ include "mautrix-go-base.envConfigPrefix" . }}{{ include "mautrix-go-base.runtimeSecretEnvKey" (dict "key" "hsToken") }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mautrix-go-base.runtimeSecretName" . }}
+                  key: hsToken
+            {{- end }}
+            {{- if $dbExistingSecret }}
+            {{- /* Order matters: the kubelet only expands $(VAR) references to env vars defined earlier in this list. */}}
+            - name: {{ include "mautrix-go-base.databasePasswordEnvVarName" . }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mautrix-go-base.databasePostgresPasswordSecretName" . }}
+                  key: {{ include "mautrix-go-base.databasePostgresPasswordSecretKey" . }}
+            - name: {{ include "mautrix-go-base.envConfigPrefix" . }}DATABASE__URI
+              value: {{ include "mautrix-go-base.databaseConnectionString" . | quote }}
+            {{- end }}
+          {{- end }}
           ports:
             - name: appservice
               containerPort: {{ .Values.appservice.port }}
@@ -174,6 +201,11 @@ stringData:
 {{- end -}}
 
 {{- define "mautrix-go-base.registrationConfigMap" -}}
+{{/* When registration.existingSecret is set the tokens are only known at
+     runtime, so a chart-rendered registration file would be unusable; the
+     registration must be provided to the homeserver from the same secret
+     source instead (see README). */}}
+{{- if eq (include "mautrix-go-base.registrationUseExistingSecret" .) "false" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -183,11 +215,12 @@ metadata:
 data:
   {{ include (printf "%s.registrationFileKey" .Chart.Name) . }}: |
 {{ include (printf "%s.registrationConfig" .Chart.Name) . | indent 4 }}
+{{- end }}
 {{- end -}}
 
 {{- define "mautrix-go-base.synapseRegistrationConfigMap" -}}
 {{- $synapseNamespace := .Values.registration.synapseNamespace | default "" | trim -}}
-{{- if and $synapseNamespace (ne $synapseNamespace .Release.Namespace) }}
+{{- if and $synapseNamespace (ne $synapseNamespace .Release.Namespace) (eq (include "mautrix-go-base.registrationUseExistingSecret" .) "false") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

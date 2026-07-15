@@ -54,7 +54,11 @@ registration:
   asToken: ""
   hsToken: ""
   # Existing Secret containing keys `asToken` and `hsToken`.
-  # When set, no chart-managed runtime Secret is created.
+  # When set, no chart-managed runtime Secret is created. The tokens are
+  # referenced at runtime via secretKeyRef and never read at template time
+  # (GitOps/ArgoCD-safe), and the registration ConfigMap is not rendered;
+  # provide the registration file to the homeserver yourself (see README).
+  # Mutually exclusive with registration.asToken/hsToken.
   existingSecret: ""
   managedSecret:
     # Create a chart-managed runtime Secret when existingSecret is not set.
@@ -130,6 +134,8 @@ database:
       # If empty and postgres.enabled=true, reused from the chart-managed Secret when present; otherwise auto-generated.
       value: ""
       # Existing Secret containing the Postgres password. Mutually exclusive with password.value.
+      # Referenced at runtime via secretKeyRef and never read at template time,
+      # so rendering stays GitOps/ArgoCD-safe. See README "Postgres" for requirements.
       existingSecret: ""
       # Key in existingSecret containing the Postgres password.
       existingSecretKey: password

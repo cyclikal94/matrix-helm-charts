@@ -208,7 +208,7 @@
         "existingSecret": {
           "type": "string",
           "default": "",
-          "description": "Existing Secret name with keys asToken/hsToken. When set, chart-managed runtime Secret is not created."
+          "description": "Existing Secret name with keys asToken/hsToken. When set, chart-managed runtime Secret is not created, the tokens are referenced at runtime via secretKeyRef (never read at template time, GitOps-safe; requires a bridge release >= v0.2512.0), the registration ConfigMap is not rendered, and inline asToken/hsToken must be empty."
         },
         "managedSecret": {
           "type": "object",
@@ -407,7 +407,7 @@
                 "existingSecret": {
                   "type": "string",
                   "default": "",
-                  "description": "Existing Secret containing the Postgres password. Mutually exclusive with value. Used for both external and bundled Postgres when set."
+                  "description": "Existing Secret containing the Postgres password. Mutually exclusive with value. Used for both external and bundled Postgres when set. Referenced at runtime via secretKeyRef and never read at template time (GitOps-safe). Requires a bridge release >= v0.2512.0 and a URI-safe password (no `@ / : ? # %` or spaces)."
                 },
                 "existingSecretKey": {
                   "type": "string",

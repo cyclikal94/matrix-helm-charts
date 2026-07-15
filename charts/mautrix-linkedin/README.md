@@ -89,6 +89,7 @@ The chart renders registration in release namespace as:
 
 Set `registration.synapseNamespace` if Synapse runs in a different namespace (for example `ess`).
 An additional registration ConfigMap copy is created only when `registration.synapseNamespace` is non-empty and different from the release namespace.
+No registration ConfigMap is rendered when `registration.existingSecret` is set; see Runtime secret generation below.
 
 For ESS, add the appservice ConfigMap in Synapse values:
 
@@ -137,7 +138,6 @@ synapse:
 
 If unset, the chart resolves these in this order:
 
-- from `registration.existingSecret` (keys `asToken`, `hsToken`) when set
 - from chart-managed Secret (default `<release>-mautrix-linkedin-runtime-secrets`) when it already exists
 - auto-generated 64-hex-char values when `registration.autoGenerate=true` and `registration.managedSecret.enabled=true` (default behavior)
 
@@ -148,7 +148,37 @@ The resolved values are used for:
 
 Do not set these to `generate`; leave empty for chart-managed generation.
 
+### Registration tokens from an existing Secret (GitOps-safe)
+
+When `registration.existingSecret` is set (Secret with keys `asToken` and `hsToken`), the chart never reads the Secret at template time, so rendering works fully offline (plain `helm template`, ArgoCD/Flux repo-side rendering). The bridge reads both tokens at runtime instead:
+
+- The StatefulSet defines `MAUTRIX_HELM_CONFIG_APPSERVICE__AS_TOKEN` and `MAUTRIX_HELM_CONFIG_APPSERVICE__HS_TOKEN` via `secretKeyRef`.
+- The chart sets `env_config_prefix: MAUTRIX_HELM_CONFIG_` in the bridge config, so the bridge overrides `appservice.as_token`/`hs_token` from those env vars at startup. Like the Postgres mechanism, this requires a bridge release `v0.2512.0` or newer.
+- Inline `registration.asToken`/`hsToken` are mutually exclusive with `registration.existingSecret`.
+- Rotating the tokens in the Secret does not restart the bridge; pair with a reload mechanism such as [stakater/Reloader](https://github.com/stakater/Reloader).
+
+**The chart does not render the registration ConfigMap in this mode** (the tokens are not available at template time), so you must provide the registration file to the homeserver from the same secret source. The easiest way to get the exact file content is to render it once with placeholder tokens:
+
+```bash
+helm template <release> charts/mautrix-linkedin \
+  --set homeserver.domain=<domain> \
+  --set registration.asToken=REPLACE_AS_TOKEN \
+  --set registration.hsToken=REPLACE_HS_TOKEN \
+  --set registration.autoGenerate=false \
+  -s templates/registration-configmap.yaml
+```
+
+Store that file (with the real tokens) next to the tokens themselves — for example in Vault, delivered by Vault Secrets Operator as a Secret in the Synapse namespace via a [destination transformation template](https://developer.hashicorp.com/vault/docs/platform/k8s/vso/secret-transformation). ESS accepts Secret references for appservices:
+
+```yaml
+synapse:
+  appservices:
+    - secret: mautrix-linkedin-registration
+      secretKey: appservice-registration-linkedin.yaml
+```
+
 For deterministic GitOps rendering, set `registration.autoGenerate=false` and provide secrets directly or via a pre-created `registration.existingSecret`.
+The Postgres password from `database.postgres.password.existingSecret` is GitOps-safe by design: it is resolved at runtime, never at template time (see the Postgres section below).
 
 ## Bridge config model
 
@@ -212,9 +242,22 @@ logging:
 
 Bundled Postgres is enabled by default.
 
-If `database.postgres.password.value` is empty, the chart resolves it from `database.postgres.password.existingSecret` when set, otherwise from the chart-managed Postgres Secret when present, otherwise it generates a 64-hex-char password for bundled Postgres on first install.
+If `database.postgres.password.value` is empty and `database.postgres.password.existingSecret` is unset, the chart reuses the chart-managed Postgres Secret when present, otherwise it generates a 64-hex-char password for bundled Postgres on first install.
 
 `database.postgres.password.value` and `database.postgres.password.existingSecret` are mutually exclusive. The existing Secret is used for both bundled and external Postgres when set. Switching between password sources is allowed, and it is the operator's responsibility to ensure the selected password matches the database.
+
+When `database.postgres.password.existingSecret` is set, the chart never reads the Secret at template time. Rendering works fully offline (plain `helm template`, ArgoCD/Flux repo-side rendering) and the password is injected at runtime instead:
+
+- The bridge StatefulSet reads the password into the `MAUTRIX_HELM_DATABASE_PASSWORD` env var via `secretKeyRef` (`existingSecret`/`existingSecretKey`).
+- Kubernetes expands it into the `MAUTRIX_HELM_CONFIG_DATABASE__URI` env var holding the full connection URI.
+- The chart sets `env_config_prefix: MAUTRIX_HELM_CONFIG_` in the bridge config, so the bridge overrides `database.uri` from that env var at startup. The rendered config file itself only contains a non-secret placeholder URI.
+
+Requirements and caveats for `existingSecret`:
+
+- Requires bridge env config support from mautrix-go v0.26.1+ (bridge releases `v0.2512.0` and newer).
+- The password is inserted into the URI without URL-encoding at runtime; it must not contain URI-reserved characters (`@`, `/`, `:`, `?`, `#`, `%`, spaces). Typical generated alphanumeric passwords (Vault, CloudNativePG, ...) are fine.
+- Rotating the password in the referenced Secret does not restart the bridge; pair with a reload mechanism such as [stakater/Reloader](https://github.com/stakater/Reloader) or roll the StatefulSet manually after rotation.
+- `values.config.baseExtra` cannot set `env_config_prefix` while `existingSecret` is set; the chart manages it.
 
 Disable bundled Postgres and use external DB:
 
@@ -229,8 +272,8 @@ database:
     user: mautrix_linkedin
     password:
       value: replace_me
-      # Remove `value` and replace with the below to use an external secret
-			# existingSecret: my-postgres-password
+      # Or use an external Secret instead of `value` (see above):
+      # existingSecret: my-postgres-password
       # existingSecretKey: password
     database: mautrix_linkedin
     sslMode: require
