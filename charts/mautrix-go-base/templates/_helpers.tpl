@@ -720,15 +720,31 @@ false
 {{- end -}}
 
 {{- $managedEnvConfig := dict -}}
-{{- if eq (include "mautrix-go-base.databasePostgresUseExistingSecret" .) "true" -}}
+{{- if or (eq (include "mautrix-go-base.databasePostgresUseExistingSecret" .) "true") (eq (include "mautrix-go-base.registrationUseExistingSecret" .) "true") -}}
 {{- if hasKey $baseExtra "env_config_prefix" -}}
-{{- fail (printf "values.config.baseExtra cannot set env_config_prefix when database.postgres.password.existingSecret is set; the chart manages it (%s) to inject the database password at runtime" (include "mautrix-go-base.envConfigPrefix" .)) -}}
+{{- fail (printf "values.config.baseExtra cannot set env_config_prefix when database.postgres.password.existingSecret or registration.existingSecret is set; the chart manages it (%s) to inject secrets at runtime" (include "mautrix-go-base.envConfigPrefix" .)) -}}
 {{- end -}}
 {{- $managedEnvConfig = dict "env_config_prefix" (include "mautrix-go-base.envConfigPrefix" .) -}}
 {{- end -}}
 
 {{- $merged := mustMergeOverwrite (dict) $baseExtra $networkBlock $managed $managedLogging $managedDoublePuppet $managedEnvConfig -}}
 {{ toYaml $merged }}
+{{- end -}}
+
+{{- define "mautrix-go-base.registrationUseExistingSecret" -}}
+{{- if ne (.Values.registration.existingSecret | default "") "" -}}true{{- else -}}false{{- end -}}
+{{- end -}}
+
+{{/* Maps a runtime secret key to the env config suffix that overrides the
+     matching bridge config path at startup (e.g. asToken -> appservice.as_token). */}}
+{{- define "mautrix-go-base.runtimeSecretEnvKey" -}}
+{{- if eq .key "asToken" -}}
+APPSERVICE__AS_TOKEN
+{{- else if eq .key "hsToken" -}}
+APPSERVICE__HS_TOKEN
+{{- else -}}
+{{- fail (printf "no env config mapping defined for runtime secret key %q" .key) -}}
+{{- end -}}
 {{- end -}}
 
 {{- define "mautrix-go-base.ensureRuntimeSecrets" -}}
@@ -738,11 +754,16 @@ false
 {{- fail (printf "%s.runtimeSecretKeys must render a comma-separated list of registration key names" .Chart.Name) -}}
 {{- end -}}
 {{- $keys := splitList "," $keysRaw -}}
-{{- $useExistingSecret := ne (.Values.registration.existingSecret | default "") "" -}}
+{{- $useExistingSecret := eq (include "mautrix-go-base.registrationUseExistingSecret" .) "true" -}}
 {{- $managedSecret := .Values.registration.managedSecret | default dict -}}
 {{- $managedSecretEnabled := and (not $useExistingSecret) ((get $managedSecret "enabled") | default false) -}}
 {{- $secretName := include "mautrix-go-base.runtimeSecretName" . -}}
-{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{/* Never lookup when existingSecret is set: the Secret is only referenced at
+     runtime via secretKeyRef so rendering stays offline/GitOps-safe. */}}
+{{- $existing := dict -}}
+{{- if not $useExistingSecret -}}
+{{- $existing = lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- end -}}
 {{- $computed := dict -}}
 {{- range $idx, $key := $keys -}}
 {{- $secretKey := $key | trim -}}
@@ -753,6 +774,12 @@ false
 {{- if eq $value "generate" -}}
 {{- fail (printf "values.registration.%s must not be set to 'generate'; leave empty for auto-generation" $secretKey) -}}
 {{- end -}}
+{{- if $useExistingSecret -}}
+{{- if ne $value "" -}}
+{{- fail (printf "values.registration.%s and values.registration.existingSecret are mutually exclusive; the value is read from the Secret at runtime" $secretKey) -}}
+{{- end -}}
+{{- $value = printf "$(%s%s)" (include "mautrix-go-base.envConfigPrefix" $) (include "mautrix-go-base.runtimeSecretEnvKey" (dict "key" $secretKey)) -}}
+{{- else -}}
 {{- if and (eq $value "") $existing (hasKey $existing.data $secretKey) -}}
 {{- $value = (index $existing.data $secretKey | b64dec) -}}
 {{- end -}}
@@ -761,6 +788,7 @@ false
 {{- $value = (randAlphaNum 64 | sha256sum) -}}
 {{- else -}}
 {{- fail (printf "registration.%s is required when missing from secret %q (set registration.%s, set registration.existingSecret to a populated Secret, or enable registration.autoGenerate with registration.managedSecret.enabled=true)" $secretKey $secretName $secretKey) -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- $_ := set $computed $secretKey $value -}}
