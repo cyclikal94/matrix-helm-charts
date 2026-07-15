@@ -56,6 +56,17 @@ spec:
             {{- include (printf "%s.bridgeCommand" .Chart.Name) . | nindent 12 }}
           args:
             {{- include (printf "%s.bridgeArgs" .Chart.Name) . | nindent 12 }}
+          {{- if eq (include "mautrix-go-base.databasePostgresUseExistingSecret" .) "true" }}
+          env:
+            {{- /* Order matters: the kubelet only expands $(VAR) references to env vars defined earlier in this list. */}}
+            - name: {{ include "mautrix-go-base.databasePasswordEnvVarName" . }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mautrix-go-base.databasePostgresPasswordSecretName" . }}
+                  key: {{ include "mautrix-go-base.databasePostgresPasswordSecretKey" . }}
+            - name: {{ include "mautrix-go-base.envConfigPrefix" . }}DATABASE__URI
+              value: {{ include "mautrix-go-base.databaseConnectionString" . | quote }}
+          {{- end }}
           ports:
             - name: appservice
               containerPort: {{ .Values.appservice.port }}

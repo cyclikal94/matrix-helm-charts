@@ -104,6 +104,25 @@ app.kubernetes.io/component: {{ .component }}
 password
 {{- end -}}
 
+{{- define "mautrix-go-base.databasePostgresUseExistingSecret" -}}
+{{- $postgres := .Values.database.postgres | default dict -}}
+{{- $passwordCfg := (get $postgres "password") | default dict -}}
+{{- $password := (get $passwordCfg "value") | default "" -}}
+{{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
+{{- if and (ne $password "") (ne $existingSecretName "") -}}
+{{- fail "values.database.postgres.password.value and values.database.postgres.password.existingSecret are mutually exclusive" -}}
+{{- end -}}
+{{- if ne $existingSecretName "" -}}true{{- else -}}false{{- end -}}
+{{- end -}}
+
+{{- define "mautrix-go-base.databasePasswordEnvVarName" -}}
+MAUTRIX_HELM_DATABASE_PASSWORD
+{{- end -}}
+
+{{- define "mautrix-go-base.envConfigPrefix" -}}
+MAUTRIX_HELM_CONFIG_
+{{- end -}}
+
 {{- define "mautrix-go-base.databasePostgresPasswordSecretName" -}}
 {{- $postgres := .Values.database.postgres | default dict -}}
 {{- $passwordCfg := (get $postgres "password") | default dict -}}
@@ -152,19 +171,13 @@ password
 {{- $passwordCfg := (get $postgres "password") | default dict -}}
 {{- $password := (get $passwordCfg "value") | default "" -}}
 {{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
-{{- $existingSecretKey := (get $passwordCfg "existingSecretKey") | default "password" -}}
 {{- if and (ne $password "") (ne $existingSecretName "") -}}
 {{- fail "values.database.postgres.password.value and values.database.postgres.password.existingSecret are mutually exclusive" -}}
 {{- end -}}
 {{- if ne $password "" -}}
 {{- $password -}}
 {{- else if ne $existingSecretName "" -}}
-{{- $existing := lookup "v1" "Secret" .Release.Namespace $existingSecretName -}}
-{{- if and $existing (hasKey $existing "data") (hasKey $existing.data $existingSecretKey) -}}
-{{- index $existing.data $existingSecretKey | b64dec -}}
-{{- else -}}
-{{- fail (printf "values.database.postgres.password.existingSecret %q must contain key %q in namespace %q" $existingSecretName $existingSecretKey .Release.Namespace) -}}
-{{- end -}}
+{{- fail (printf "internal error: the Postgres password from existingSecret %q is resolved at runtime via secretKeyRef and must not be resolved at template time" $existingSecretName) -}}
 {{- else -}}
 {{- include "mautrix-go-base.ensureDatabasePostgresPassword" . -}}
 {{- index .Values.database.postgres "_computedPassword" -}}
@@ -172,6 +185,15 @@ password
 {{- end -}}
 
 {{- define "mautrix-go-base.databasePostgresPasswordChecksum" -}}
+{{- if eq (include "mautrix-go-base.databasePostgresUseExistingSecret" .) "true" -}}
+{{/* Never embed the secret value: it is not readable at template time (GitOps-safe).
+     Rotating the referenced Secret in place does not restart pods; use a reloader. */}}
+{{- $payload := dict
+  "secretName" (include "mautrix-go-base.databasePostgresPasswordSecretName" .)
+  "secretKey" (include "mautrix-go-base.databasePostgresPasswordSecretKey" .)
+-}}
+{{- toYaml $payload | sha256sum -}}
+{{- else -}}
 {{- include "mautrix-go-base.ensureDatabasePostgresPassword" . -}}
 {{- $payload := dict
   "secretName" (include "mautrix-go-base.databasePostgresPasswordSecretName" .)
@@ -179,6 +201,7 @@ password
   "password" (include "mautrix-go-base.databasePostgresPassword" .)
 -}}
 {{- toYaml $payload | sha256sum -}}
+{{- end -}}
 {{- end -}}
 
 {{- define "mautrix-go-base.databaseConnectionString" -}}
@@ -194,9 +217,18 @@ password
 {{- end -}}
 {{- $database := include "mautrix-go-base.databasePostgresDatabase" . -}}
 {{- $user := include "mautrix-go-base.databasePostgresUser" . -}}
-{{- $password := include "mautrix-go-base.databasePostgresPassword" . -}}
+{{- $passwordSegment := "" -}}
+{{- if eq (include "mautrix-go-base.databasePostgresUseExistingSecret" .) "true" -}}
+{{/* The real password is injected at runtime: the kubelet expands this $(VAR)
+     reference in the MAUTRIX_HELM_CONFIG_DATABASE__URI env var, and the bridge's
+     env_config_prefix support overrides database.uri from that env var. The
+     placeholder is intentionally left unexpanded in the config file itself. */}}
+{{- $passwordSegment = printf "$(%s)" (include "mautrix-go-base.databasePasswordEnvVarName" .) -}}
+{{- else -}}
+{{- $passwordSegment = include "mautrix-go-base.databasePostgresPassword" . | urlquery -}}
+{{- end -}}
 {{- $sslMode := (get $postgres "sslMode") | default "" -}}
-{{- $connectionString := printf "postgres://%s:%s@%s:%v/%s" ($user | urlquery) ($password | urlquery) $host $port ($database | urlquery) -}}
+{{- $connectionString := printf "postgres://%s:%s@%s:%v/%s" ($user | urlquery) $passwordSegment $host $port ($database | urlquery) -}}
 {{- if ne $sslMode "" -}}
 {{- printf "%s?sslmode=%s" $connectionString ($sslMode | urlquery) -}}
 {{- else -}}
@@ -687,7 +719,15 @@ false
 {{- $networkBlock = dict "network" $networkExtra -}}
 {{- end -}}
 
-{{- $merged := mustMergeOverwrite (dict) $baseExtra $networkBlock $managed $managedLogging $managedDoublePuppet -}}
+{{- $managedEnvConfig := dict -}}
+{{- if eq (include "mautrix-go-base.databasePostgresUseExistingSecret" .) "true" -}}
+{{- if hasKey $baseExtra "env_config_prefix" -}}
+{{- fail (printf "values.config.baseExtra cannot set env_config_prefix when database.postgres.password.existingSecret is set; the chart manages it (%s) to inject the database password at runtime" (include "mautrix-go-base.envConfigPrefix" .)) -}}
+{{- end -}}
+{{- $managedEnvConfig = dict "env_config_prefix" (include "mautrix-go-base.envConfigPrefix" .) -}}
+{{- end -}}
+
+{{- $merged := mustMergeOverwrite (dict) $baseExtra $networkBlock $managed $managedLogging $managedDoublePuppet $managedEnvConfig -}}
 {{ toYaml $merged }}
 {{- end -}}
 

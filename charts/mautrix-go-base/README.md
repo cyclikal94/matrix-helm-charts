@@ -40,7 +40,18 @@ A wrapper chart that depends on this library must define these helpers:
 5. Fail on overlaps with wrapper-declared reserved paths.
 6. Inject managed bridge logging as stdout `pretty-colored` with `min_level` from top-level `values.logging` (default `info`).
 7. Inject managed local double puppet secret at `double_puppet.secrets[homeserver.domain]`.
-8. Merge as: `baseExtra` + `{network: networkExtra}` + `managedConfig` + managed logging + managed double puppet (managed wins).
+8. Merge as: `baseExtra` + `{network: networkExtra}` + `managedConfig` + managed logging + managed double puppet + managed env config prefix (managed wins).
+
+## Runtime Postgres password injection
+
+When `database.postgres.password.existingSecret` is set, the library never reads the Secret at template time (no `lookup`), so rendering works offline (plain `helm template`, ArgoCD/Flux repo-side rendering):
+
+- `mautrix-go-base.databaseConnectionString` renders the URI with a literal `$(MAUTRIX_HELM_DATABASE_PASSWORD)` placeholder instead of the password.
+- The bridge StatefulSet defines `MAUTRIX_HELM_DATABASE_PASSWORD` via `secretKeyRef` and `MAUTRIX_HELM_CONFIG_DATABASE__URI` with the placeholder URI; the kubelet expands the `$(VAR)` reference at container start.
+- `mautrix-go-base.bridgev2MergedConfig` injects `env_config_prefix: MAUTRIX_HELM_CONFIG_`, so mautrix-go (v0.26.1+, bridge releases `v0.2512.0`+) overrides `database.uri` from that env var at startup.
+- `mautrix-go-base.databasePostgresPasswordChecksum` hashes only the Secret name/key in this mode, never the value; rotation therefore needs an external reloader.
+
+`values.config.baseExtra` cannot set `env_config_prefix` while `existingSecret` is set. The password must be URI-safe because the runtime substitution cannot URL-encode it.
 
 ## Kubernetes Behavior
 
