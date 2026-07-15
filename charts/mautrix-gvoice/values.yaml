@@ -130,6 +130,8 @@ database:
       # If empty and postgres.enabled=true, reused from the chart-managed Secret when present; otherwise auto-generated.
       value: ""
       # Existing Secret containing the Postgres password. Mutually exclusive with password.value.
+      # Referenced at runtime via secretKeyRef and never read at template time,
+      # so rendering stays GitOps/ArgoCD-safe. See README "Postgres" for requirements.
       existingSecret: ""
       # Key in existingSecret containing the Postgres password.
       existingSecretKey: password

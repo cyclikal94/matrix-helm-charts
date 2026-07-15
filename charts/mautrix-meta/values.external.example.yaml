@@ -15,8 +15,11 @@ database:
     user: mautrix_meta
     password:
       value: replace_me
-      # Remove `value` and replace with the below to use an external secret
-			# existingSecret: my-postgres-password
+      # Or source the password from a pre-created Secret instead of `value`.
+      # GitOps-friendly: the Secret is only referenced at runtime via
+      # secretKeyRef and never read at template time, so offline rendering
+      # (plain `helm template`, ArgoCD/Flux) works. See README "Postgres".
+      # existingSecret: my-postgres-password
       # existingSecretKey: password
     database: mautrix_meta
     sslMode: require
