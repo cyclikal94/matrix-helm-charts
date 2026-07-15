@@ -208,7 +208,7 @@
         "existingSecret": {
           "type": "string",
           "default": "",
-          "description": "Existing Secret name with keys asToken/hsToken. When set, chart-managed runtime Secret is not created."
+          "description": "Existing Secret name with keys asToken/hsToken. When set, chart-managed runtime Secret is not created, the tokens are referenced at runtime via secretKeyRef (never read at template time, GitOps-safe; requires a bridge release >= v0.2512.0), the registration ConfigMap is not rendered, and inline asToken/hsToken must be empty."
         },
         "managedSecret": {
           "type": "object",

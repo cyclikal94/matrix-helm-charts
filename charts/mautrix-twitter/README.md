@@ -89,6 +89,7 @@ The chart renders registration in release namespace as:
 
 Set `registration.synapseNamespace` if Synapse runs in a different namespace (for example `ess`).
 An additional registration ConfigMap copy is created only when `registration.synapseNamespace` is non-empty and different from the release namespace.
+No registration ConfigMap is rendered when `registration.existingSecret` is set; see Runtime secret generation below.
 
 For ESS, add the appservice ConfigMap in Synapse values:
 
@@ -137,7 +138,6 @@ synapse:
 
 If unset, the chart resolves these in this order:
 
-- from `registration.existingSecret` (keys `asToken`, `hsToken`) when set
 - from chart-managed Secret (default `<release>-mautrix-twitter-runtime-secrets`) when it already exists
 - auto-generated 64-hex-char values when `registration.autoGenerate=true` and `registration.managedSecret.enabled=true` (default behavior)
 
@@ -147,6 +147,35 @@ The resolved values are used for:
 - `registration.hsToken`
 
 Do not set these to `generate`; leave empty for chart-managed generation.
+
+### Registration tokens from an existing Secret (GitOps-safe)
+
+When `registration.existingSecret` is set (Secret with keys `asToken` and `hsToken`), the chart never reads the Secret at template time, so rendering works fully offline (plain `helm template`, ArgoCD/Flux repo-side rendering). The bridge reads both tokens at runtime instead:
+
+- The StatefulSet defines `MAUTRIX_HELM_CONFIG_APPSERVICE__AS_TOKEN` and `MAUTRIX_HELM_CONFIG_APPSERVICE__HS_TOKEN` via `secretKeyRef`.
+- The chart sets `env_config_prefix: MAUTRIX_HELM_CONFIG_` in the bridge config, so the bridge overrides `appservice.as_token`/`hs_token` from those env vars at startup. Like the Postgres mechanism, this requires a bridge release `v0.2512.0` or newer.
+- Inline `registration.asToken`/`hsToken` are mutually exclusive with `registration.existingSecret`.
+- Rotating the tokens in the Secret does not restart the bridge; pair with a reload mechanism such as [stakater/Reloader](https://github.com/stakater/Reloader).
+
+**The chart does not render the registration ConfigMap in this mode** (the tokens are not available at template time), so you must provide the registration file to the homeserver from the same secret source. The easiest way to get the exact file content is to render it once with placeholder tokens:
+
+```bash
+helm template <release> charts/mautrix-twitter \
+  --set homeserver.domain=<domain> \
+  --set registration.asToken=REPLACE_AS_TOKEN \
+  --set registration.hsToken=REPLACE_HS_TOKEN \
+  --set registration.autoGenerate=false \
+  -s templates/registration-configmap.yaml
+```
+
+Store that file (with the real tokens) next to the tokens themselves — for example in Vault, delivered by Vault Secrets Operator as a Secret in the Synapse namespace via a [destination transformation template](https://developer.hashicorp.com/vault/docs/platform/k8s/vso/secret-transformation). ESS accepts Secret references for appservices:
+
+```yaml
+synapse:
+  appservices:
+    - secret: mautrix-twitter-registration
+      secretKey: appservice-registration-twitter.yaml
+```
 
 For deterministic GitOps rendering, set `registration.autoGenerate=false` and provide secrets directly or via a pre-created `registration.existingSecret`.
 The Postgres password from `database.postgres.password.existingSecret` is GitOps-safe by design: it is resolved at runtime, never at template time (see the Postgres section below).
