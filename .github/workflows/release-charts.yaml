@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "charts/**"
+      - ".github/scripts/validate_chart_versions.js"
       - ".github/workflows/release-charts.yaml"
   workflow_dispatch:
 
@@ -19,7 +20,23 @@ permissions:
   packages: write
 
 jobs:
+  validate-chart-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate changed chart versions
+        run: node .github/scripts/validate_chart_versions.js
+        env:
+          BASE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+          DIFF_STYLE: range
+
   release:
+    needs: validate-chart-versions
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
