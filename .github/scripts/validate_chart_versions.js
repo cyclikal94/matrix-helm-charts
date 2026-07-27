@@ -134,12 +134,39 @@ function getFallbackBaseSha(headSha) {
 }
 
 const headSha = process.env.HEAD_SHA || "HEAD";
-const baseSha = process.env.BASE_SHA || getFallbackBaseSha(headSha);
+let baseSha = process.env.BASE_SHA || getFallbackBaseSha(headSha);
 const diffStyle = process.env.DIFF_STYLE || "range";
 
 if (!baseSha) {
   console.log("No base SHA available; skipping chart version validation.");
   process.exit(0);
+}
+
+if (!gitMaybe(["rev-parse", "--verify", `${headSha}^{commit}`])) {
+  console.log(`Head SHA ${headSha} is not available; skipping chart version validation.`);
+  process.exit(0);
+}
+
+if (!gitMaybe(["rev-parse", "--verify", `${baseSha}^{commit}`])) {
+  const fallbackBaseSha = getFallbackBaseSha(headSha);
+  if (!fallbackBaseSha) {
+    console.log(`Base SHA ${baseSha} is not available and no fallback base could be resolved; skipping chart version validation.`);
+    process.exit(0);
+  }
+
+  console.log(`Base SHA ${baseSha} is not available; falling back to ${fallbackBaseSha}.`);
+  baseSha = fallbackBaseSha;
+}
+
+if (diffStyle === "range" && !gitMaybe(["merge-base", "--is-ancestor", baseSha, headSha])) {
+  const fallbackBaseSha = getFallbackBaseSha(headSha);
+  if (!fallbackBaseSha) {
+    console.log(`Base SHA ${baseSha} is not an ancestor of ${headSha} and no fallback base could be resolved; skipping chart version validation.`);
+    process.exit(0);
+  }
+
+  console.log(`Base SHA ${baseSha} is not an ancestor of ${headSha}; falling back to ${fallbackBaseSha}.`);
+  baseSha = fallbackBaseSha;
 }
 
 const diffArgs = ["diff", "--name-only"];
