@@ -3,7 +3,7 @@
   "title": "ntfy chart values",
   "description": "Configuration values for deploying ntfy with this Helm chart.",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "host"
   ],

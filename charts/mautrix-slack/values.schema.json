@@ -3,7 +3,7 @@
   "title": "mautrix-slack chart values",
   "description": "Configuration values for deploying mautrix-slack with this Helm chart.",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "homeserver"
   ],
