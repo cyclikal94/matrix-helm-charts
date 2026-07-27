@@ -16,7 +16,7 @@ spec:
       labels:
         {{- include "matrix-appservice-irc.componentSelectorLabels" (dict "context" . "component" "postgres") | nindent 8 }}
       annotations:
-        checksum/secret: {{ include (print $.Template.BasePath "/postgres-secret.yaml") . | sha256sum }}
+        checksum/secret: {{ include "matrix-appservice-irc.databasePostgresPasswordChecksum" . }}
     spec:
       {{- if .Values.postgres.podSecurityContext.enabled }}
       {{- $podSecurityContext := omit .Values.postgres.podSecurityContext "enabled" }}
@@ -41,20 +41,14 @@ spec:
               containerPort: {{ .Values.postgres.service.port }}
           env:
             - name: POSTGRES_DB
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "matrix-appservice-irc.postgresFullname" . }}
-                  key: POSTGRES_DB
+              value: {{ include "matrix-appservice-irc.databasePostgresDatabase" . | quote }}
             - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "matrix-appservice-irc.postgresFullname" . }}
-                  key: POSTGRES_USER
+              value: {{ include "matrix-appservice-irc.databasePostgresUser" . | quote }}
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "matrix-appservice-irc.postgresFullname" . }}
-                  key: POSTGRES_PASSWORD
+                  name: {{ include "matrix-appservice-irc.databasePostgresPasswordSecretName" . }}
+                  key: {{ include "matrix-appservice-irc.databasePostgresPasswordSecretKey" . }}
           {{- with .Values.postgres.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

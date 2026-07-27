@@ -100,11 +100,85 @@ app.kubernetes.io/component: {{ .component }}
 {{- required "values.database.postgres.user is required" $user -}}
 {{- end -}}
 
+{{- define "mautrix-go-base.databasePostgresManagedSecretKey" -}}
+password
+{{- end -}}
+
+{{- define "mautrix-go-base.databasePostgresPasswordSecretName" -}}
+{{- $postgres := .Values.database.postgres | default dict -}}
+{{- $passwordCfg := (get $postgres "password") | default dict -}}
+{{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
+{{- if ne $existingSecretName "" -}}
+{{- $existingSecretName -}}
+{{- else -}}
+{{- include "mautrix-go-base.postgresFullname" . -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "mautrix-go-base.databasePostgresPasswordSecretKey" -}}
+{{- $postgres := .Values.database.postgres | default dict -}}
+{{- $passwordCfg := (get $postgres "password") | default dict -}}
+{{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
+{{- if ne $existingSecretName "" -}}
+{{- (get $passwordCfg "existingSecretKey") | default "password" -}}
+{{- else -}}
+{{- include "mautrix-go-base.databasePostgresManagedSecretKey" . -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "mautrix-go-base.ensureDatabasePostgresPassword" -}}
+{{- $postgres := .Values.database.postgres | default dict -}}
+{{- if not (hasKey $postgres "_computedPassword") -}}
+{{- $password := "" -}}
+{{- if .Values.postgres.enabled -}}
+{{- $managedSecretName := include "mautrix-go-base.postgresFullname" . -}}
+{{- $managedSecretKey := include "mautrix-go-base.databasePostgresManagedSecretKey" . -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $managedSecretName -}}
+{{- if and $existing (hasKey $existing "data") (hasKey $existing.data $managedSecretKey) -}}
+{{- $password = (index $existing.data $managedSecretKey | b64dec) -}}
+{{- else -}}
+{{- $password = (randAlphaNum 64 | sha256sum) -}}
+{{- end -}}
+{{- end -}}
+{{- if eq $password "" -}}
+{{- fail "values.database.postgres.password.value or values.database.postgres.password.existingSecret is required when postgres.enabled=false" -}}
+{{- end -}}
+{{- $_ := set $postgres "_computedPassword" $password -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "mautrix-go-base.databasePostgresPassword" -}}
 {{- $postgres := .Values.database.postgres | default dict -}}
 {{- $passwordCfg := (get $postgres "password") | default dict -}}
 {{- $password := (get $passwordCfg "value") | default "" -}}
-{{- required "values.database.postgres.password.value is required" $password -}}
+{{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
+{{- $existingSecretKey := (get $passwordCfg "existingSecretKey") | default "password" -}}
+{{- if and (ne $password "") (ne $existingSecretName "") -}}
+{{- fail "values.database.postgres.password.value and values.database.postgres.password.existingSecret are mutually exclusive" -}}
+{{- end -}}
+{{- if ne $password "" -}}
+{{- $password -}}
+{{- else if ne $existingSecretName "" -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $existingSecretName -}}
+{{- if and $existing (hasKey $existing "data") (hasKey $existing.data $existingSecretKey) -}}
+{{- index $existing.data $existingSecretKey | b64dec -}}
+{{- else -}}
+{{- fail (printf "values.database.postgres.password.existingSecret %q must contain key %q in namespace %q" $existingSecretName $existingSecretKey .Release.Namespace) -}}
+{{- end -}}
+{{- else -}}
+{{- include "mautrix-go-base.ensureDatabasePostgresPassword" . -}}
+{{- index .Values.database.postgres "_computedPassword" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "mautrix-go-base.databasePostgresPasswordChecksum" -}}
+{{- include "mautrix-go-base.ensureDatabasePostgresPassword" . -}}
+{{- $payload := dict
+  "secretName" (include "mautrix-go-base.databasePostgresPasswordSecretName" .)
+  "secretKey" (include "mautrix-go-base.databasePostgresPasswordSecretKey" .)
+  "password" (include "mautrix-go-base.databasePostgresPassword" .)
+-}}
+{{- toYaml $payload | sha256sum -}}
 {{- end -}}
 
 {{- define "mautrix-go-base.databaseConnectionString" -}}

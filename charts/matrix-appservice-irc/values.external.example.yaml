@@ -25,5 +25,8 @@ database:
     user: matrix_irc
     password:
       value: replace_me
+      # Remove `value` and replace with the below to use an external secret
+			# existingSecret: my-postgres-password
+      # existingSecretKey: password
     database: matrix_irc
     sslMode: prefer

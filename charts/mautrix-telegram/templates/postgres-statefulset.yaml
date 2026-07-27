@@ -16,7 +16,7 @@ spec:
       labels:
         {{- include "mautrix-telegram.componentSelectorLabels" (dict "context" . "component" "postgres") | nindent 8 }}
       annotations:
-        checksum/secret: {{ include (print $.Template.BasePath "/postgres-secret.yaml") . | sha256sum }}
+        checksum/secret: {{ include "mautrix-telegram.databasePostgresPasswordChecksum" . }}
     spec:
       {{- if .Values.postgres.podSecurityContext.enabled }}
       {{- $podSecurityContext := omit .Values.postgres.podSecurityContext "enabled" }}
@@ -44,8 +44,8 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mautrix-telegram.postgresFullname" . }}
-                  key: password
+                  name: {{ include "mautrix-telegram.databasePostgresPasswordSecretName" . }}
+                  key: {{ include "mautrix-telegram.databasePostgresPasswordSecretKey" . }}
           ports:
             - name: postgres
               containerPort: {{ .Values.postgres.service.port }}

@@ -94,11 +94,85 @@ appservice-registration-googlechat.yaml
 {{- required "values.database.postgres.user is required" $user -}}
 {{- end -}}
 
+{{- define "mautrix-googlechat.databasePostgresManagedSecretKey" -}}
+password
+{{- end -}}
+
+{{- define "mautrix-googlechat.databasePostgresPasswordSecretName" -}}
+{{- $postgres := .Values.database.postgres | default dict -}}
+{{- $passwordCfg := (get $postgres "password") | default dict -}}
+{{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
+{{- if ne $existingSecretName "" -}}
+{{- $existingSecretName -}}
+{{- else -}}
+{{- include "mautrix-googlechat.postgresFullname" . -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "mautrix-googlechat.databasePostgresPasswordSecretKey" -}}
+{{- $postgres := .Values.database.postgres | default dict -}}
+{{- $passwordCfg := (get $postgres "password") | default dict -}}
+{{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
+{{- if ne $existingSecretName "" -}}
+{{- (get $passwordCfg "existingSecretKey") | default "password" -}}
+{{- else -}}
+{{- include "mautrix-googlechat.databasePostgresManagedSecretKey" . -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "mautrix-googlechat.ensureDatabasePostgresPassword" -}}
+{{- $postgres := .Values.database.postgres | default dict -}}
+{{- if not (hasKey $postgres "_computedPassword") -}}
+{{- $password := "" -}}
+{{- if .Values.postgres.enabled -}}
+{{- $managedSecretName := include "mautrix-googlechat.postgresFullname" . -}}
+{{- $managedSecretKey := include "mautrix-googlechat.databasePostgresManagedSecretKey" . -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $managedSecretName -}}
+{{- if and $existing (hasKey $existing "data") (hasKey $existing.data $managedSecretKey) -}}
+{{- $password = (index $existing.data $managedSecretKey | b64dec) -}}
+{{- else -}}
+{{- $password = (randAlphaNum 64 | sha256sum) -}}
+{{- end -}}
+{{- end -}}
+{{- if eq $password "" -}}
+{{- fail "values.database.postgres.password.value or values.database.postgres.password.existingSecret is required when postgres.enabled=false" -}}
+{{- end -}}
+{{- $_ := set $postgres "_computedPassword" $password -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "mautrix-googlechat.databasePostgresPassword" -}}
 {{- $postgres := .Values.database.postgres | default dict -}}
 {{- $passwordCfg := (get $postgres "password") | default dict -}}
 {{- $password := (get $passwordCfg "value") | default "" -}}
-{{- required "values.database.postgres.password.value is required" $password -}}
+{{- $existingSecretName := (get $passwordCfg "existingSecret") | default "" -}}
+{{- $existingSecretKey := (get $passwordCfg "existingSecretKey") | default "password" -}}
+{{- if and (ne $password "") (ne $existingSecretName "") -}}
+{{- fail "values.database.postgres.password.value and values.database.postgres.password.existingSecret are mutually exclusive" -}}
+{{- end -}}
+{{- if ne $password "" -}}
+{{- $password -}}
+{{- else if ne $existingSecretName "" -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $existingSecretName -}}
+{{- if and $existing (hasKey $existing "data") (hasKey $existing.data $existingSecretKey) -}}
+{{- index $existing.data $existingSecretKey | b64dec -}}
+{{- else -}}
+{{- fail (printf "values.database.postgres.password.existingSecret %q must contain key %q in namespace %q" $existingSecretName $existingSecretKey .Release.Namespace) -}}
+{{- end -}}
+{{- else -}}
+{{- include "mautrix-googlechat.ensureDatabasePostgresPassword" . -}}
+{{- index .Values.database.postgres "_computedPassword" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "mautrix-googlechat.databasePostgresPasswordChecksum" -}}
+{{- include "mautrix-googlechat.ensureDatabasePostgresPassword" . -}}
+{{- $payload := dict
+  "secretName" (include "mautrix-googlechat.databasePostgresPasswordSecretName" .)
+  "secretKey" (include "mautrix-googlechat.databasePostgresPasswordSecretKey" .)
+  "password" (include "mautrix-googlechat.databasePostgresPassword" .)
+-}}
+{{- toYaml $payload | sha256sum -}}
 {{- end -}}
 
 {{- define "mautrix-googlechat.databaseConnectionString" -}}
