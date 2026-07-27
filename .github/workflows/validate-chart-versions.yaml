@@ -20,7 +20,7 @@ on:
 permissions:
   contents: read
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   resolve-context:
@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Resolve PR context
         id: resolve
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             let pr;
@@ -92,9 +92,14 @@ jobs:
           REPORT_PATH: chart-version-validation.json
 
       - name: Update validation comment
-        if: always()
+        if: >-
+          always() &&
+          (
+            github.event_name == 'workflow_dispatch' ||
+            github.event.pull_request.head.repo.full_name == github.repository
+          )
         continue-on-error: true
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           REPORT_PATH: chart-version-validation.json
         with:
