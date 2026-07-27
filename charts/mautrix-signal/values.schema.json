@@ -3,7 +3,7 @@
   "title": "mautrix-signal chart values",
   "description": "Configuration values for deploying mautrix-signal with this Helm chart.",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "homeserver"
   ],

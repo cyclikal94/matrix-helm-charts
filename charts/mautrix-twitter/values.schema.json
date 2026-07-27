@@ -3,7 +3,7 @@
   "title": "mautrix-twitter chart values",
   "description": "Configuration values for deploying mautrix-twitter with this Helm chart.",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "homeserver"
   ],

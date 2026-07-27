@@ -3,7 +3,7 @@
   "title": "mautrix-gvoice chart values",
   "description": "Configuration values for deploying mautrix-gvoice with this Helm chart.",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "homeserver"
   ],

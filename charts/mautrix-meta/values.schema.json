@@ -3,7 +3,7 @@
   "title": "mautrix-meta chart values",
   "description": "Configuration values for deploying mautrix-meta with this Helm chart.",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "homeserver"
   ],

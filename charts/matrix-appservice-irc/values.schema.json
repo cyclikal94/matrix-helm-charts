@@ -3,7 +3,7 @@
   "title": "matrix-appservice-irc chart values",
   "description": "Configuration values for deploying matrix-appservice-irc with this Helm chart.",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "host"
   ],
