@@ -5,5 +5,5 @@ home: https://docs.mau.fi/bridges/python/telegram/
 sources:
   - https://github.com/mautrix/telegram
 type: application
-version: 1.0.0
+version: 1.0.1
 appVersion: "v0.15.3"
