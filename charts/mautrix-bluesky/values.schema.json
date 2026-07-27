@@ -3,7 +3,7 @@
   "title": "mautrix-bluesky chart values",
   "description": "Configuration values for deploying mautrix-bluesky with this Helm chart.",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "homeserver"
   ],
