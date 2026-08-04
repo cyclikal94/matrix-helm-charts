@@ -1,0 +1,86 @@
+{{- $persistenceValues := .Values.persistence | default dict -}}
+{{- $persistenceEnabled := true -}}
+{{- if hasKey $persistenceValues "enabled" -}}
+{{- $persistenceEnabled = (get $persistenceValues "enabled") -}}
+{{- end -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "baibot.fullname" . }}
+  labels:
+    {{- include "baibot.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "baibot.fullname" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "baibot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "baibot.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/config-secret.yaml") . | sha256sum }}
+        checksum/runtime-support: {{ include (print $.Template.BasePath "/runtime-support-secret.yaml") . | sha256sum }}
+    spec:
+      {{- if .Values.podSecurityContext.enabled }}
+      {{- $podSecurityContext := omit .Values.podSecurityContext "enabled" }}
+      {{- with $podSecurityContext.seccompProfile }}
+      {{- if ne .type "Localhost" }}
+      {{- $podSecurityContext = merge (omit $podSecurityContext "seccompProfile") (dict "seccompProfile" (omit . "localhostProfile")) }}
+      {{- end }}
+      {{- end }}
+      securityContext:
+        {{- toYaml $podSecurityContext | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "baibot.name" . }}
+          image: {{ include "baibot.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: BAIBOT_CONFIG_FILE_PATH
+              value: /config/config.yml
+          {{- if .Values.securityContext.enabled }}
+          securityContext:
+            {{- toYaml (omit .Values.securityContext "enabled") | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /config/config.yml
+              subPath: config.yml
+              readOnly: true
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          secret:
+            secretName: {{ include "baibot.configSecretName" . }}
+            items:
+              - key: config.yml
+                path: config.yml
+        - name: tmp
+          emptyDir: {}
+        {{- if not $persistenceEnabled }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+  {{- if $persistenceEnabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - {{ default "ReadWriteOnce" .Values.persistence.accessMode }}
+        resources:
+          requests:
+            storage: {{ default "1Gi" .Values.persistence.size }}
+        {{- if .Values.persistence.storageClassName }}
+        storageClassName: {{ .Values.persistence.storageClassName }}
+        {{- end }}
+  {{- end }}

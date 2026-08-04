@@ -1,0 +1,10 @@
+apiVersion: v2
+name: baibot
+description: Helm chart for baibot
+icon: https://raw.githubusercontent.com/etkecc/baibot/main/etc/assets/baibot.png
+home: https://github.com/etkecc/baibot
+sources:
+  - https://github.com/etkecc/baibot
+type: application
+version: 1.0.0
+appVersion: "v1.17.0"

@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "baibot chart values",
+  "description": "Configuration values for deploying baibot with this Helm chart.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "nameOverride": {
+      "type": "string",
+      "default": "",
+      "description": "Optional short name override used for labels and naming when fullnameOverride is empty."
+    },
+    "fullnameOverride": {
+      "type": "string",
+      "default": "",
+      "description": "Optional full resource name override. When set, this takes precedence over nameOverride."
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository": {
+          "type": "string",
+          "default": "ghcr.io/etkecc/baibot"
+        },
+        "tag": {
+          "type": "string",
+          "default": "v1.17.0"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ],
+          "default": "IfNotPresent"
+        }
+      }
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "seccompProfile": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "default": "RuntimeDefault"
+            },
+            "localhostProfile": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "securityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "allowPrivilegeEscalation": {
+          "type": "boolean",
+          "default": false
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean",
+          "default": true
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "drop": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "ALL"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "default": {}
+    },
+    "user": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "password": {
+          "type": "string",
+          "default": ""
+        },
+        "accessToken": {
+          "type": "string",
+          "default": ""
+        },
+        "deviceId": {
+          "type": "string",
+          "default": ""
+        },
+        "recoveryPassphrase": {
+          "type": "string",
+          "default": ""
+        },
+        "recoveryResetAllowed": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": null
+        },
+        "existingSecret": {
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "accessMode": {
+          "type": "string",
+          "enum": [
+            "ReadWriteOnce",
+            "ReadOnlyMany",
+            "ReadWriteMany",
+            "ReadWriteOncePod"
+          ],
+          "default": "ReadWriteOnce"
+        },
+        "size": {
+          "type": "string",
+          "default": "1Gi",
+          "minLength": 1
+        },
+        "storageClassName": {
+          "type": "string",
+          "default": ""
+        },
+        "sessionEncryptionKey": {
+          "type": "string",
+          "default": ""
+        },
+        "configEncryptionKey": {
+          "type": "string",
+          "default": ""
+        },
+        "existingSecret": {
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "apiKeys": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "existingSecret": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "extra": {
+          "type": "string",
+          "default": "",
+          "description": "Raw baibot configuration YAML merged with Helm-managed sensitive values."
+        }
+      }
+    }
+  }
+}

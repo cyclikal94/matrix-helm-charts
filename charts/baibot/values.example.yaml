@@ -1,0 +1,41 @@
+#      .
+#     / V\
+#   / `  /
+#  <<   |    Absolute minimal values example file for baibot.
+#  /    |    You should probably check `values.matrix.example.yaml`.
+#
+
+user:
+  password: change_me
+  # Or use an existing Secret instead:
+  # existingSecret: baibot-user
+
+# Persistence is enabled by default.
+# Or provide an existing Secret instead:
+# persistence:
+#   existingSecret: baibot-persistence
+
+config:
+  extra: |
+    homeserver:
+      server_name: matrix.example.com
+      url: http://ess-synapse.ess.svc.cluster.local:8008
+
+    user:
+      mxid_localpart: baibot
+      name: baibot
+      avatar: null
+
+    access:
+      admin_patterns:
+        - "@admin:matrix.example.com"
+
+    initial_global_config:
+      handler:
+        catch_all: null
+        text_generation: null
+        text_to_speech: null
+        speech_to_text: null
+        image_generation: null
+      user_patterns:
+        - "@*:matrix.example.com"

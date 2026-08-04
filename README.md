@@ -67,6 +67,20 @@ HTTP-based pub-sub notification service. Useful to allow providing Matrix push n
 
 </td></tr></table>
 
+<table><tr><td>
+
+[![baibot](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.baibot%5B0%5D.version&label=baibot%20Helm%20Chart&logo=helm&style=for-the-badge)](charts/baibot/README.md)
+
+</td><td align="right">
+
+[![etkecc/baibot](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/cyclikal94/matrix-helm-charts/gh-pages/index.yaml&query=%24.entries.baibot%5B0%5D.appVersion&label=etkecc%2Fbaibot&logo=github&style=for-the-badge)](https://github.com/etkecc/baibot)
+
+</td></tr><tr><td colspan="2">
+
+AI bot for Matrix built by etke.cc. This chart keeps the upstream YAML config model intact while adding Kubernetes-friendly secret handling for authentication, persistence encryption keys, and static agent API keys.
+
+</td></tr></table>
+
 ### Bridges
 
 <table><tr><td>
