@@ -1,15 +1,1 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "mautrix-telegram.fullname" . }}
-  labels:
-    {{- include "mautrix-telegram.componentLabels" (dict "context" . "component" "bridge") | nindent 4 }}
-spec:
-  publishNotReadyAddresses: {{ .Values.service.publishNotReadyAddresses }}
-  selector:
-    {{- include "mautrix-telegram.componentSelectorLabels" (dict "context" . "component" "bridge") | nindent 4 }}
-  ports:
-    - name: appservice
-      protocol: TCP
-      port: {{ .Values.service.port }}
-      targetPort: appservice
+{{ include "mautrix-go-base.service" . }}

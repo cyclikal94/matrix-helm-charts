@@ -7,7 +7,3 @@
 
 homeserver:
   domain: matrix.example.com
-
-telegram:
-  apiID: 12345678
-  apiHash: replace_with_telegram_api_hash

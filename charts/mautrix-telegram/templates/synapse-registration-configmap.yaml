@@ -1,13 +1,1 @@
-{{- $synapseNamespace := .Values.registration.synapseNamespace | default "" | trim -}}
-{{- if and $synapseNamespace (ne $synapseNamespace .Release.Namespace) }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "mautrix-telegram.registrationConfigMapName" . }}
-  namespace: {{ $synapseNamespace }}
-  labels:
-    {{- include "mautrix-telegram.componentLabels" (dict "context" . "component" "registration") | nindent 4 }}
-data:
-  {{ include "mautrix-telegram.registrationFileKey" . }}: |
-{{ include "mautrix-telegram.registrationConfig" . | indent 4 }}
-{{- end }}
+{{ include "mautrix-go-base.synapseRegistrationConfigMap" . }}

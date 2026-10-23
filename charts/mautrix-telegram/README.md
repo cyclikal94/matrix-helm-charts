@@ -13,20 +13,22 @@ This chart deploys `mautrix-telegram` with:
 - Bridge `Service` with `publishNotReadyAddresses: true`
 - Runtime config `Secret` (`config.yaml`)
 - Registration ConfigMap in release namespace and optional duplicate in Synapse namespace
+- Automatic double puppeting registration resources (runtime Secret + ConfigMap)
 - Optional bundled Postgres `StatefulSet`
 
-The bridge is started by running the main command directly with `--no-update`.
+Default image/app version tracks upstream image/git tag `v0.2610.0` (release `v26.10`).
 
 ## Kubernetes behavior
 
 This chart follows the mautrix Kubernetes guidance:
 
 - No startup script usage
+- Bridge runs with direct command and `--no-update`
 - No registration file mounted in bridge pod
-- `--no-update` to avoid runtime config writes
 - `/data` mounted read-only
 - Singleton runtime (`StatefulSet`, 1 replica)
 - `publishNotReadyAddresses: true`
+- Probe endpoints are available, but probes are disabled by default
 
 ## Quick Start
 
@@ -44,6 +46,7 @@ telegram:
 Install:
 
 ```bash
+helm dependency build ./charts/mautrix-telegram
 helm upgrade --install mautrix-telegram ./charts/mautrix-telegram -f mautrix-telegram-values.yaml
 ```
 
@@ -69,6 +72,20 @@ helm upgrade --install mautrix-telegram matrix-helm-charts/mautrix-telegram -n m
 
 Validation is enforced by `values.schema.json`.
 
+## Logging
+
+Set top-level `logging` to control bridge log level.
+
+Allowed values:
+
+- `panic`
+- `fatal`
+- `error`
+- `warn`
+- `info`
+- `debug`
+- `trace`
+
 ## Registration ConfigMap model
 
 The chart renders registration in release namespace as:
@@ -88,11 +105,45 @@ synapse:
       configMapKey: appservice-registration-telegram.yaml
 ```
 
+## Double Puppeting
+
+Automatic double puppeting is enabled by default (`doublePuppet.enabled=true`).
+
+The chart manages:
+
+- `double_puppet.secrets[homeserver.domain]` in bridge config
+- a second appservice registration ConfigMap for double puppeting
+- optional double puppet runtime Secret values (`asToken`, `hsToken`, `senderLocalpart`)
+
+Default double puppet registration ID is:
+
+- `doublepuppet-<mautrix-go-base-version>`
+
+You can override this with `doublePuppet.registration.id`.
+Default ConfigMap name is `<doublePuppet.registration.id>-registration` (override with `doublePuppet.registration.configMapName`).
+
+Reuse behavior:
+
+- When `doublePuppet.reuseExisting.enabled=true` (default), the chart looks up an existing double puppet registration ConfigMap in Synapse namespace and reuses its `as_token` when found.
+- On RBAC/API lookup failures, rendering fails fast.
+
+You can still define other bridgev2 `double_puppet` fields in `config.baseExtra` (for example `servers` and `allow_discovery`).
+Do not set the local homeserver entry in `double_puppet.secrets`; Helm manages that key.
+
+When not reusing an existing registration, add the double puppet registration ConfigMap to Synapse appservices:
+
+```yaml
+synapse:
+  appservices:
+    - configMap: <doublePuppet registration configmap name>
+      configMapKey: appservice-registration-doublepuppet.yaml
+```
+
 ## Runtime secret generation
 
 If unset, the chart resolves these in this order:
 
-- from `registration.existingSecret` (keys `asToken`, `hsToken`, `provisioningSharedSecret`) when set
+- from `registration.existingSecret` (keys `asToken`, `hsToken`) when set
 - from chart-managed Secret (default `<release>-mautrix-telegram-runtime-secrets`) when it already exists
 - auto-generated 64-hex-char values when `registration.autoGenerate=true` and `registration.managedSecret.enabled=true` (default behavior)
 
@@ -100,7 +151,6 @@ The resolved values are used for:
 
 - `registration.asToken`
 - `registration.hsToken`
-- `appservice.provisioning.sharedSecret`
 
 Do not set these to `generate`; leave empty for chart-managed generation.
 
@@ -108,7 +158,14 @@ For deterministic GitOps rendering, set `registration.autoGenerate=false` and pr
 
 ## Bridge config model
 
-`config.extra` is merged into generated `config.yaml`.
+Bridge config is split into two channels:
+
+- `config.baseExtra`: shared bridgev2 config merged at top-level. See upstream bridgev2 example in [`mautrix/go`](https://github.com/mautrix/go/blob/main/bridgev2/matrix/mxmain/example-config.yaml).
+- `config.networkExtra`: bridge-specific config merged under top-level `network`. See upstream Telegram connector example in [`mautrix/telegram`](https://github.com/mautrix/telegram/blob/main/pkg/connector/example-config.yaml).
+
+`config.networkExtra` must contain raw network keys only (not a nested `network:` block).
+`config.baseExtra` must not contain top-level `network`.
+`config.baseExtra` must not contain top-level `logging`; use top-level `logging` value instead.
 
 The chart reserves and manages these paths:
 
@@ -117,19 +174,47 @@ The chart reserves and manages these paths:
 - `appservice.address`
 - `appservice.hostname`
 - `appservice.port`
-- `appservice.database`
 - `appservice.id`
-- `appservice.bot_username`
+- `appservice.bot.username`
 - `appservice.as_token`
 - `appservice.hs_token`
-- `appservice.ephemeral_events`
-- `appservice.provisioning.shared_secret`
-- `bridge.username_template`
-- `bridge.alias_template`
+- `database.type`
+- `database.uri`
+- `logging`
+- `double_puppet.secrets[homeserver.domain]`
 - `telegram.api_id`
 - `telegram.api_hash`
 
-If `config.extra` overlaps any managed path, template rendering fails.
+If `config.baseExtra` overlaps any managed path, template rendering fails.
+You may set `double_puppet.servers`, `double_puppet.allow_discovery`, and non-local `double_puppet.secrets` entries in `config.baseExtra`.
+
+`bridge.permissions` is required by bridgev2 and should be set in `config.baseExtra`.
+
+Example:
+
+```yaml
+logging: debug
+
+config:
+  baseExtra: |
+    bridge:
+      permissions:
+        "*": relay
+        "@admin:example.com": admin
+  networkExtra: |
+    os_name: Mautrix-Telegram bridge
+    browser_name: Linux
+```
+
+The chart always injects bridge logging config as:
+
+```yaml
+logging:
+  min_level: <values.logging>
+  writers:
+    - type: stdout
+      format: pretty-colored
+```
 
 ## Postgres
 
@@ -176,6 +261,7 @@ Probe configuration is optional and disabled by default:
 ## Linting
 
 ```bash
+helm dependency build ./charts/mautrix-telegram
 helm lint ./charts/mautrix-telegram -f ./charts/mautrix-telegram/values.example.yaml
 ```
 

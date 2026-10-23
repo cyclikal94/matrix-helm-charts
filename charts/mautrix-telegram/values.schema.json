@@ -5,10 +5,13 @@
   "type": "object",
   "additionalProperties": true,
   "required": [
-    "homeserver",
-    "telegram"
+    "homeserver"
   ],
   "properties": {
+    "mautrix-go-base": {
+      "type": "object",
+      "default": {}
+    },
     "nameOverride": {
       "type": "string",
       "default": "",
@@ -29,7 +32,7 @@
         },
         "tag": {
           "type": "string",
-          "default": "v0.15.3"
+          "default": "v0.2610.0"
         },
         "pullPolicy": {
           "type": "string",
@@ -58,6 +61,82 @@
         }
       }
     },
+    "podSecurityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "seccompProfile": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "RuntimeDefault",
+                "Unconfined",
+                "Localhost"
+              ],
+              "default": "RuntimeDefault"
+            },
+            "localhostProfile": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      }
+    },
+    "securityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "allowPrivilegeEscalation": {
+          "type": "boolean",
+          "default": false
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean",
+          "default": false
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "drop": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "ALL"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "logging": {
+      "type": "string",
+      "default": "info",
+      "description": "Bridge log level for chart-managed stdout logging config.",
+      "enum": [
+        "panic",
+        "fatal",
+        "error",
+        "warn",
+        "info",
+        "debug",
+        "trace"
+      ]
+    },
     "homeserver": {
       "type": "object",
       "additionalProperties": false,
@@ -74,7 +153,7 @@
           "type": "string",
           "minLength": 1,
           "default": "",
-          "description": "Matrix homeserver domain (e.g. matrix.example.com)."
+          "description": "Matrix homeserver domain (for example matrix.example.com)."
         }
       }
     },
@@ -85,10 +164,6 @@
         "id": {
           "type": "string",
           "default": "telegram"
-        },
-        "botUsername": {
-          "type": "string",
-          "default": "telegrambot"
         },
         "address": {
           "type": "string",
@@ -104,18 +179,13 @@
           "maximum": 65535,
           "default": 29317
         },
-        "ephemeralEvents": {
-          "type": "boolean",
-          "default": true
-        },
-        "provisioning": {
+        "bot": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "sharedSecret": {
+            "username": {
               "type": "string",
-              "default": "",
-              "description": "Provisioning API shared secret. If empty, sourced from registration.existingSecret when set; otherwise auto-generated when registration.autoGenerate=true and registration.managedSecret.enabled=true."
+              "default": "telegrambot"
             }
           }
         }
@@ -138,7 +208,7 @@
         "existingSecret": {
           "type": "string",
           "default": "",
-          "description": "Existing Secret name with keys asToken/hsToken/provisioningSharedSecret. When set, chart-managed runtime Secret is not created."
+          "description": "Existing Secret name with keys asToken/hsToken. When set, chart-managed runtime Secret is not created."
         },
         "managedSecret": {
           "type": "object",
@@ -168,10 +238,6 @@
           "type": "string",
           "default": ""
         },
-        "aliasRegex": {
-          "type": "string",
-          "default": ""
-        },
         "senderLocalpart": {
           "type": "string",
           "default": ""
@@ -191,25 +257,91 @@
         }
       }
     },
-    "telegram": {
+    "doublePuppet": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "apiID",
-        "apiHash"
-      ],
       "properties": {
-        "apiID": {
-          "type": "integer",
-          "minimum": 1,
-          "default": 0,
-          "description": "Telegram API ID from https://my.telegram.org/apps"
+        "enabled": {
+          "type": "boolean",
+          "default": true
         },
-        "apiHash": {
-          "type": "string",
-          "minLength": 1,
-          "default": "",
-          "description": "Telegram API hash from https://my.telegram.org/apps"
+        "registration": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "default": ""
+            },
+            "asToken": {
+              "type": "string",
+              "default": "",
+              "description": "Double puppet appservice as_token. If empty, sourced from registration.existingSecret, reuseExisting ConfigMap, managed Secret, or auto-generated."
+            },
+            "hsToken": {
+              "type": "string",
+              "default": "",
+              "description": "Double puppet appservice hs_token. If empty, sourced from registration.existingSecret, reuseExisting ConfigMap, managed Secret, or auto-generated."
+            },
+            "senderLocalpart": {
+              "type": "string",
+              "default": "",
+              "description": "Double puppet appservice sender_localpart. If empty, sourced from registration.existingSecret, reuseExisting ConfigMap, managed Secret, or auto-generated."
+            },
+            "existingSecret": {
+              "type": "string",
+              "default": "",
+              "description": "Existing Secret name with keys asToken/hsToken/senderLocalpart for double puppeting."
+            },
+            "managedSecret": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "name": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            },
+            "autoGenerate": {
+              "type": "boolean",
+              "default": true
+            },
+            "rateLimited": {
+              "type": "boolean",
+              "default": false
+            },
+            "configMapName": {
+              "type": "string",
+              "default": ""
+            },
+            "fileKey": {
+              "type": "string",
+              "default": "appservice-registration-doublepuppet.yaml"
+            }
+          }
+        },
+        "reuseExisting": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "configMapName": {
+              "type": "string",
+              "default": ""
+            },
+            "fileKey": {
+              "type": "string",
+              "default": ""
+            }
+          }
         }
       }
     },
@@ -217,16 +349,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "usernameTemplate": {
-          "type": "string",
-          "default": "telegram_{userid}",
-          "description": "Template for Matrix user localparts. Must include a placeholder (for example {userid}). Legacy {{.}} is also supported."
-        },
-        "aliasTemplate": {
-          "type": "string",
-          "default": "telegram_{groupname}",
-          "description": "Template for Matrix room aliases. Must include a placeholder (for example {groupname}). Legacy {{.}} is also supported."
-        },
         "resources": {
           "type": "object",
           "default": {},
@@ -237,11 +359,17 @@
     "config": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Additional raw YAML merged into generated config.yaml. Overlaps with Helm-managed keys fail template rendering.",
+      "description": "Split bridgev2 config extras. baseExtra merges at root, networkExtra is nested under network. Overlaps with Helm-managed keys fail template rendering. logging and local double_puppet secret are managed by top-level values.",
       "properties": {
-        "extra": {
+        "baseExtra": {
           "type": "string",
-          "default": ""
+          "default": "",
+          "description": "Shared bridgev2 config YAML merged at top-level. Must be a YAML map and must not contain top-level network or logging."
+        },
+        "networkExtra": {
+          "type": "string",
+          "default": "",
+          "description": "Bridge-specific network config YAML merged under top-level network. Must be a YAML map and must not include nested network."
         }
       }
     },
@@ -349,6 +477,12 @@
             },
             "accessMode": {
               "type": "string",
+              "enum": [
+                "ReadWriteOnce",
+                "ReadOnlyMany",
+                "ReadWriteMany",
+                "ReadWriteOncePod"
+              ],
               "default": "ReadWriteOnce"
             },
             "size": {
@@ -377,30 +511,14 @@
                   "type": "string",
                   "enum": [
                     "RuntimeDefault",
-                    "Localhost",
-                    "Unconfined"
+                    "Unconfined",
+                    "Localhost"
                   ],
                   "default": "RuntimeDefault"
                 },
                 "localhostProfile": {
-                  "type": "string"
-                }
-              },
-              "if": {
-                "properties": {
-                  "type": {
-                    "const": "Localhost"
-                  }
-                }
-              },
-              "then": {
-                "required": [
-                  "localhostProfile"
-                ],
-                "properties": {
-                  "localhostProfile": {
-                    "minLength": 1
-                  }
+                  "type": "string",
+                  "default": ""
                 }
               }
             }
@@ -421,18 +539,6 @@
             "readOnlyRootFilesystem": {
               "type": "boolean",
               "default": false
-            },
-            "capabilities": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "drop": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
             }
           }
         },
@@ -511,84 +617,6 @@
               "type": "integer",
               "minimum": 1,
               "default": 3
-            }
-          }
-        }
-      }
-    },
-    "podSecurityContext": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": true
-        },
-        "seccompProfile": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": [
-                "RuntimeDefault",
-                "Localhost",
-                "Unconfined"
-              ],
-              "default": "RuntimeDefault"
-            },
-            "localhostProfile": {
-              "type": "string"
-            }
-          },
-          "if": {
-            "properties": {
-              "type": {
-                "const": "Localhost"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "localhostProfile"
-            ],
-            "properties": {
-              "localhostProfile": {
-                "minLength": 1
-              }
-            }
-          }
-        }
-      }
-    },
-    "securityContext": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": true
-        },
-        "allowPrivilegeEscalation": {
-          "type": "boolean",
-          "default": false
-        },
-        "readOnlyRootFilesystem": {
-          "type": "boolean",
-          "default": false
-        },
-        "capabilities": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "drop": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": [
-                "ALL"
-              ]
             }
           }
         }

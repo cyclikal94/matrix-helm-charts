@@ -10,7 +10,8 @@ fullnameOverride: ""
 
 image:
   repository: dock.mau.dev/mautrix/telegram
-  tag: "v0.15.3"
+  # Upstream release v26.10 is tagged as v0.2610.0 in git/image tags.
+  tag: "v0.2610.0"
   pullPolicy: IfNotPresent
 
 service:
@@ -30,6 +31,10 @@ securityContext:
     drop:
       - ALL
 
+# Bridge log level for chart-managed stdout logging config.
+# Valid: panic, fatal, error, warn, info, debug, trace
+logging: info
+
 homeserver:
   address: http://ess-synapse.ess.svc.cluster.local:8008
   # Required: Matrix domain used by homeserver config and registration regex entries.
@@ -37,15 +42,12 @@ homeserver:
 
 appservice:
   id: telegram
-  botUsername: telegrambot
   # Optional override. Defaults to in-cluster service URL.
   address: ""
   hostname: 0.0.0.0
   port: 29317
-  ephemeralEvents: true
-  provisioning:
-    # Optional override. If empty, sourced from registration.existingSecret when set; otherwise auto-generated when registration.autoGenerate=true.
-    sharedSecret: ""
+  bot:
+    username: telegrambot
 
 registration:
   # If empty, sourced from registration.existingSecret when set; otherwise auto-generated when registration.autoGenerate=true.
@@ -63,9 +65,8 @@ registration:
   autoGenerate: true
   # Optional override. Defaults to appservice.address value.
   serviceUrl: ""
-  # Optional overrides. If empty, derived from bridge username/alias templates.
+  # Optional override. If empty, a regex based on appservice.id and homeserver.domain is used.
   userRegex: ""
-  aliasRegex: ""
   # Optional override. Defaults to appservice.botUsername.
   senderLocalpart: ""
   rateLimited: false
@@ -75,21 +76,49 @@ registration:
   # Leave empty to derive from release name, e.g. "<release>-mautrix-telegram-registration".
   synapseConfigMapName: ""
 
-telegram:
-  # Required: Telegram API ID from https://my.telegram.org/apps
-  apiID: 0
-  # Required: Telegram API hash from https://my.telegram.org/apps
-  apiHash: ""
+doublePuppet:
+  enabled: true
+  registration:
+    # Optional override. Defaults to "doublepuppet-<mautrix-go-base-version>".
+    id: ""
+    # If empty, resolved from registration.existingSecret, reuseExisting ConfigMap, managed Secret, or auto-generate.
+    asToken: ""
+    hsToken: ""
+    senderLocalpart: ""
+    # Existing Secret containing keys `asToken`, `hsToken`, and `senderLocalpart`.
+    # When set, chart-managed double puppet runtime Secret is not created.
+    existingSecret: ""
+    managedSecret:
+      # Create a chart-managed double puppet runtime Secret when existingSecret is not set.
+      enabled: true
+      # Optional override for managed Secret name.
+      name: ""
+    # Auto-generate missing double puppet registration values when using chart-managed Secret mode.
+    autoGenerate: true
+    rateLimited: false
+    # Optional override. Defaults to "<doublePuppet.registration.id>-registration".
+    configMapName: ""
+    fileKey: appservice-registration-doublepuppet.yaml
+  reuseExisting:
+    # Look up existing Synapse double puppet registration ConfigMap and reuse tokens when found.
+    enabled: true
+    # Optional overrides for reuse lookup source.
+    configMapName: ""
+    fileKey: ""
 
 bridge:
-  usernameTemplate: telegram_{userid}
-  aliasTemplate: telegram_{groupname}
   resources: {}
 
 config:
-  # Raw bridge config YAML merged into generated config.yaml.
+  # Shared bridgev2 config YAML merged at top-level in generated config.yaml.
   # If this overlaps with Helm-managed keys, template rendering fails.
-  extra: ""
+  # Do not place `logging` here; use top-level `logging`.
+  # Do not place `network` here; use config.networkExtra for bridge-specific config.
+  baseExtra: ""
+  # Bridge-specific mautrix-telegram network config YAML.
+  # This is automatically nested under top-level `network:` in generated config.yaml.
+  # Do not include a `network:` key in this block.
+  networkExtra: ""
 
 database:
   postgres:

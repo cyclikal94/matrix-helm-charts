@@ -9,18 +9,26 @@ homeserver:
   address: http://ess-synapse.ess.svc.cluster.local:8008
   domain: matrix.example.com
 
-telegram:
-  # See https://docs.mau.fi/bridges/general/initial-config.html#mautrix-telegram for details
-  apiID: 12345678
-  apiHash: replace_with_telegram_api_hash
-
 registration:
   # Set if Synapse runs in a different namespace than this release.
   synapseNamespace: ess
 
+logging: info
+
+doublePuppet:
+  enabled: true
+  # Optional overrides for shared registration behavior:
+  # registration:
+  #   id: doublepuppet-<mautrix-go-base-version>
+  #   asToken: ""
+
 config:
-  extra: |
+  baseExtra: |
     bridge:
       permissions:
-        "*": relaybot
+        "*": relay
         "@admin:example.com": admin
+  networkExtra: |
+    # os_name: Mautrix-Telegram bridge
+    # api_id: 12345
+    # api_hash: tjyd5yge35lbodk1xwzw2jstp90k55qz
