@@ -37,7 +37,7 @@
         },
         "tag": {
           "type": "string",
-          "default": "release-4.0.0"
+          "default": "release-4.0.1"
         },
         "pullPolicy": {
           "type": "string",
@@ -91,7 +91,7 @@
             },
             "tag": {
               "type": "string",
-              "default": "release-4.0.0"
+              "default": "release-4.0.1"
             },
             "pullPolicy": {
               "type": "string",
